@@ -1,0 +1,45 @@
+# ===== .NET build output =====
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+
+# ===== Publish output =====
+*_publish/
+**/publish/
+!installer/**/*.md
+
+# ===== Generated installer =====
+installer/*.exe
+installer/*-Setup.exe
+
+# ===== Visual Studio / Rider =====
+.vs/
+.idea/
+*.userosscache
+*.sln.docstates
+*.ncb
+*.opendb
+*.VC.db
+*.sln.DotSettings.user
+.vscode/
+
+# ===== Test results & coverage =====
+[Tt]est[Rr]eport*/
+*.trx
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+
+# ===== Runtime logs =====
+*.log
+
+# ===== OS files =====
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ===== Dotnet tools =====
+*.tmp_proj
+*.ide/state.iml

@@ -1,0 +1,125 @@
+<Window x:Class="PcCleaner.App.DiskAnalyzerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Disk Analyzer" Height="620" Width="720"
+        WindowStartupLocation="CenterOwner" Background="#1a1a2e" ResizeMode="NoResize">
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="DISK ANALYZER"
+                   Foreground="White" FontSize="22" FontWeight="Bold"
+                   HorizontalAlignment="Center" Margin="0,5,0,10"/>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="Drive:" Foreground="#94a3b8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox x:Name="DriveCombo" Width="110" SelectionChanged="DriveCombo_SelectionChanged"/>
+            </StackPanel>
+
+            <TextBlock x:Name="PathText" Grid.Column="1" Text="/" Foreground="#ccc" FontSize="12"
+                       VerticalAlignment="Center" Margin="12,0" TextTrimming="CharacterEllipsis"/>
+
+            <Button Grid.Column="2" x:Name="BackButton" Content="⬅ Back" Width="80" Height="28"
+                    Background="#0f3460" Foreground="White" BorderThickness="0" Margin="0,0,8,0"
+                    Click="BackButton_Click" IsEnabled="False"/>
+            <Button Grid.Column="3" x:Name="RescanButton" Content="⟳ Rescan" Width="90" Height="28"
+                    Background="#0f3460" Foreground="White" BorderThickness="0"
+                    Click="RescanButton_Click"/>
+        </Grid>
+
+        <!-- Status -->
+        <TextBlock x:Name="StatusText" Grid.Row="2" Text="Select a drive..." Foreground="#b8c0d0"
+                   FontSize="12" Margin="2,0,0,8" TextWrapping="Wrap" MinHeight="18"/>
+
+        <!-- Entry list -->
+        <Border Grid.Row="3" Background="#16213e" CornerRadius="8" BorderBrush="#2a2a4a" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="15,10,15,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="NAME" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="SIZE" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="FILES" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="SHARE" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"
+                               HorizontalAlignment="Right"/>
+                </Grid>
+
+                <ListView x:Name="EntryList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                          Foreground="White" MouseDoubleClick="EntryList_MouseDoubleClick">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Padding" Value="15,4"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="280">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding TypeIcon}" Foreground="#94a3b8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0"/>
+                                            <Border Background="#4a2b2e" CornerRadius="3" Padding="4,1" VerticalAlignment="Center"
+                                                    Visibility="{Binding TagVisibility}" ToolTip="Protected system file/folder - not junk, cannot be cleaned">
+                                                <TextBlock Text="{Binding TagText}" Foreground="#ff9eb3" FontSize="9" FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="110" DisplayMemberBinding="{Binding SizeDisplay}"/>
+                            <GridViewColumn Width="110" DisplayMemberBinding="{Binding FileCountDisplay}"/>
+                            <GridViewColumn Width="180">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Border Height="14" Background="#2a2a50" CornerRadius="3" VerticalAlignment="Center">
+                                                <ProgressBar Value="{Binding BarPercent}" Maximum="100"
+                                                             Height="14" Background="#2a2a50"
+                                                             Foreground="#e94560" BorderThickness="0"/>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </Border>
+
+        <!-- Hint -->
+        <TextBlock Grid.Row="4" Text="Double-click a folder to go inside" Foreground="#666"
+                   FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+    </Grid>
+</Window>
