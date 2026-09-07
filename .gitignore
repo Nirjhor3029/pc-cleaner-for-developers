@@ -7,11 +7,11 @@
 # ===== Publish output =====
 *_publish/
 **/publish/
-!installer/**/*.md
+# !installer/**/*.md
 
 # ===== Generated installer =====
-installer/*.exe
-installer/*-Setup.exe
+# installer/*.exe
+# installer/*-Setup.exe
 
 # ===== Visual Studio / Rider =====
 .vs/
