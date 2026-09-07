@@ -154,13 +154,26 @@ dotnet test
 
 ### Build the installer (optional)
 ```powershell
-# 1. Publish a self-contained output
+# 1a. Self-contained (no .NET needed on target PC, recommended for WhatsApp, ~48 MB installer)
+dotnet publish src/PcCleaner.App -c Release -r win-x64 --self-contained true -o src/PcCleaner.App/bin/Release/net8.0-windows/publish
+
+# 1b. Framework-dependent (needs .NET 8 Desktop Runtime, ~2 MB installer)
 dotnet publish src/PcCleaner.App -c Release -r win-x64 --self-contained false -o src/PcCleaner.App/bin/Release/net8.0-windows/publish
 
 # 2. Compile the install script
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer/pc-cleaner.iss
+# or: & "C:\Users\$env:USERNAME\AppData\Local\Programs\Inno Setup 6\ISCC.exe" installer/pc-cleaner.iss
 ```
-Output: `installer/PC-Cleaner-Setup.exe`
+Output: `installer/PC-Cleaner-Setup.exe` (self-contained 48.82 MB) / `PC-Cleaner-Setup-Framework.exe` (2.21 MB)
+
+### 📥 Install from WhatsApp (no SDK needed)
+Share `installer/PC-Cleaner-v1.0.0-WhatsApp.zip` (48.3 MB, contains `PC-Cleaner-Setup.exe` + `README-INSTALL.txt`) — receiver just downloads, extracts, double-clicks.
+- If browser says `blocked`: `... → Keep → Keep anyway` (ZIP avoids this).
+- Right-click exe → `Properties → Unblock → Apply` (or `Unblock-File` in PowerShell).
+- Double-click → `Yes (UAC)` → `More info → Run anyway` (unsigned, first time only) → Next → Install.
+- If Defender quarantines: `Windows Security → Protection history → Allow → Restore`.
+
+> See `installer/INSTALL-GUIDE.txt` for receiver instructions. Signed build via SignPath (free for OSS) pending — see `SIGNPATH-APPLY-GUIDE.md`.
 
 ---
 
