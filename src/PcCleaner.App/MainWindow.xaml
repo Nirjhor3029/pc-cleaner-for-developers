@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PcCleaner.App"
         mc:Ignorable="d"
-        Title="PC Cleaner" Height="600" Width="400"
-        WindowStartupLocation="CenterScreen" Background="#1a1a2e" ResizeMode="NoResize">
+        Title="PC Cleaner" Height="600" Width="400" MinWidth="380" MinHeight="550"
+        WindowStartupLocation="CenterScreen" Background="#1a1a2e" ResizeMode="CanResize">
     <Window.Resources>
         <Style x:Key="MainButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>

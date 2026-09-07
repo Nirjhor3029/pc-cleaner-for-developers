@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Disk Analyzer" Height="620" Width="720"
-        WindowStartupLocation="CenterOwner" Background="#1a1a2e" ResizeMode="NoResize">
+        Title="Disk Analyzer" Height="620" Width="720" MinWidth="720" MinHeight="500"
+        WindowStartupLocation="CenterOwner" Background="#1a1a2e" ResizeMode="CanResize">
 
     <Grid Margin="15">
         <Grid.RowDefinitions>
