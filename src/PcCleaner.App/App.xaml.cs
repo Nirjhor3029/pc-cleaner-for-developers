@@ -4,12 +4,18 @@ using Microsoft.Extensions.DependencyInjection;
 using PcCleaner.Application.Interfaces;
 using PcCleaner.Application.Services;
 using PcCleaner.Domain.Interfaces;
+using PcCleaner.App.ViewModels;
 using PcCleaner.Infrastructure.Browser;
 using PcCleaner.Infrastructure.Cleaning;
 using PcCleaner.Infrastructure.DiskAnalyzer;
+using PcCleaner.Infrastructure.Health;
+using PcCleaner.Infrastructure.History;
+using PcCleaner.Infrastructure.Monitoring;
 using PcCleaner.Infrastructure.Scanners;
 using PcCleaner.Infrastructure.Scanners.Apps;
 using PcCleaner.Infrastructure.Scanners.Developer;
+using PcCleaner.Infrastructure.Startup;
+using PcCleaner.Infrastructure.SystemInfo;
 using Serilog;
 
 namespace PcCleaner.App;
@@ -29,10 +35,10 @@ public partial class App : System.Windows.Application
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
-        Log.Information("PC Cleaner started");
+        Log.Information("PC Cleaner started — Performance & Health Manager");
 
-        var mainWindow = Services.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+        var shell = Services.GetRequiredService<ShellWindow>();
+        shell.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -116,6 +122,19 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, PipCacheScanner>();
         services.AddSingleton<IScanner, FlutterPubCacheScanner>();
 
+        // New optimizer services
+        services.AddSingleton<IStartupManager, StartupManager>();
+        services.AddSingleton<IResourceMonitor, ResourceMonitor>();
+        services.AddSingleton<ISystemScanner, SystemScanner>();
+        services.AddSingleton<IHealthScoreService, HealthScoreService>();
+        services.AddSingleton<IScanHistoryStore, JsonScanHistoryStore>();
+
+        // ViewModels
+        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<StartupViewModel>();
+        services.AddSingleton<ResourceViewModel>();
+
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<ShellWindow>();
     }
 }

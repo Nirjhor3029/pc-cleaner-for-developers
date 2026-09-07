@@ -1,0 +1,112 @@
+<UserControl x:Class="PcCleaner.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#0f0f1e">
+        <StackPanel Margin="20">
+
+            <!-- Score + Header -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Circular Gauge -->
+                <Grid Width="150" Height="150" HorizontalAlignment="Left">
+                    <Ellipse Fill="#16213e" Stroke="#2a2a4a" StrokeThickness="1"/>
+                    <Ellipse x:Name="ProgressRing" Width="130" Height="130" Stroke="#7f5af0" StrokeThickness="10" StrokeDashArray="1 1000" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform Angle="-90"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding OverallScore}" Foreground="White" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="/ 100" Foreground="#94a3b8" FontSize="12" HorizontalAlignment="Center" Margin="0,-6,0,0"/>
+                        <TextBlock Text="{Binding OverallStatus}" Foreground="#22c55e" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="PC PERFORMANCE" Foreground="#7f5af0" FontSize="11" FontWeight="Bold" Margin="0,0,0,4"/>
+                    <TextBlock Text="Overall health based on storage, startup, memory, CPU, disk &amp; background." Foreground="#94a3b8" FontSize="12" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding LastScanText}" Foreground="#555" FontSize="11" Margin="0,8,0,0"/>
+                    <Button Content="↻ Refresh" Width="100" Height="30" Style="{StaticResource MainButtonStyle}" Background="#1f2b4a" FontSize="12" Margin="0,10,0,0" Command="{Binding RefreshCommand}" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 5 Cards -->
+            <UniformGrid Columns="5" Margin="0,18,0,0">
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,6,0">
+                    <StackPanel>
+                        <TextBlock Text="CPU" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding CpuPercent, StringFormat={}{0:0}%}" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding CpuStatus}" Foreground="#22c55e" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="3,0,3,0">
+                    <StackPanel>
+                        <TextBlock Text="RAM" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding RamPercent, StringFormat={}{0:0}%}" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding RamStatus}" Foreground="#22c55e" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="3,0,3,0">
+                    <StackPanel>
+                        <TextBlock Text="DISK" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding DiskPercent, StringFormat={}{0:0}%}" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                        <TextBlock Text="Active" Foreground="#94a3b8" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="3,0,3,0">
+                    <StackPanel>
+                        <TextBlock Text="STARTUP" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding StartupCount}" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                        <TextBlock Text="apps" Foreground="#94a3b8" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="6,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="STORAGE" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding StorageFreePercent, StringFormat={}{0:0}% free}" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding StorageStatus}" Foreground="#22c55e" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Recommended Actions -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,14,0,0">
+                <StackPanel>
+                    <TextBlock Text="Recommended Actions" Foreground="White" FontWeight="Bold" FontSize="13"/>
+                    <TextBlock Text="Fix what's slowing you down — review then act." Foreground="#94a3b8" FontSize="11" Margin="0,2,0,8"/>
+                    <ItemsControl ItemsSource="{Binding Actions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#1f2b4a" CornerRadius="6" Padding="10,8" Margin="0,4">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="SemiBold" FontSize="12"/>
+                                            <TextBlock Text="{Binding Message}" Foreground="#94a3b8" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding ActionLabel}" Foreground="#7f5af0" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Fix Recommended Issues" Style="{StaticResource MainButtonStyle}" Background="#22c55e" Foreground="White" Height="40" Margin="0,10,0,0"
+                            IsEnabled="{Binding Actions.Count}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Snapshot Details -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,14,0,0" Visibility="Collapsed">
+                <TextBlock Text="Before → After will appear after optimization (verification step)." Foreground="#666" FontSize="11"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
