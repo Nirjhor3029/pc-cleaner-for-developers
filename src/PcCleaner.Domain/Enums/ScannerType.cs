@@ -15,5 +15,17 @@ public enum ScannerType
     YarnCache,
     ComposerCache,
     VSCodeCache,
-    PlaywrightCache
+    PlaywrightCache,
+    GradleCache,
+    AndroidStudioCache,
+    NuGetCache,
+    HuggingFaceCache,
+    TeamsCache,
+    SlackCache,
+    DiscordCache,
+    PnpmCache,
+    BunCache,
+    MavenCache,
+    PipCache,
+    FlutterPubCache
 }

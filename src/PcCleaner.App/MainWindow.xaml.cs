@@ -87,6 +87,12 @@ public partial class MainWindow : Window
                     vm.IsWarning = true;
                     vm.WarningText = "⚠ Re-downloaded on next run";
                 }
+                else if (result.Type == ScannerType.HuggingFaceCache)
+                {
+                    vm.IsSelected = false;
+                    vm.IsWarning = true;
+                    vm.WarningText = "⚠ Re-downloaded on next run";
+                }
 
                 viewModels.Add(vm);
             }

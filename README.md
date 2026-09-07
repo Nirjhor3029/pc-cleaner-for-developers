@@ -21,10 +21,19 @@ know exactly what is eating your disk before you delete anything.
 - **Windows Update Cache** & **Delivery Optimization**
 
 ### Developer Cleanup
-- **npm Cache** · **Yarn Cache** · **Composer Cache**
+- **npm Cache** · **Yarn Cache** · **Composer Cache** · **pnpm Cache** · **Bun Cache** · **pip Cache**
+- **Gradle Cache** (dependencies + downloaded Gradle dists) & **NuGet HTTP Cache** & **Maven Wrapper Cache**
+- **Flutter Pub Cache** (re-resolved by `flutter pub get`)
+- **Android Studio / JetBrains IDE Caches** (caches + logs, all installed products)
 - **VS Code Cache** (Cache / CachedData / Code Cache / GPUCache / logs)
+- **AI Model Cache (Hugging Face)** — re-downloadable models/blobs (⚠ off by default;
+  chat & session history is always preserved)
 - **Playwright Browsers** (⚠ re-downloaded on next run, off by default)
 - **Chrome & Edge** caches across *all* profiles (`Cache`, `Code Cache`, `GPUCache`) — bookmarks, history, cookies and passwords are never touched
+
+### Application Cleanup
+- **Microsoft Teams** (Cache / Code Cache / GPUCache / blob_storage / logs)
+- **Slack** · **Discord** caches — chat history and signed-in data are never touched
 
 ### Disk Analyzer
 - Drive-level folder size breakdown with recursive drill-down
@@ -35,7 +44,7 @@ know exactly what is eating your disk before you delete anything.
 - **Scan first, delete second** — two-step flow with per-category selection
 - Live **progress bar** while scanning and cleaning; all controls lock during work
 - Admin elevation requested only when needed (Windows Temp, Windows Update, Delivery Optimization)
-- Grouped results: **System Cleanup** / **Developer Cleanup** with live "ready to clean" total
+- Grouped results: **System Cleanup** / **Developer Cleanup** / **Application Caches** with live "ready to clean" total
 - Detailed cleaning report (deleted / skipped / reasons)
 
 ---
@@ -130,5 +139,4 @@ Serilog file sink → `%LOCALAPPDATA%\PC-Cleaner\logs\cleaner-YYYYMMDD.log` (7-d
 
 - Docker cleanup (build cache, unused images/containers) via CLI
 - WiX / System Cleanup integration (DISM WinSxS, `cleanmgr` for Windows.old)
-- pnpm / Bun / NuGet / pip / Gradle cache support
 - Stopwatch & space-recovered history dashboard

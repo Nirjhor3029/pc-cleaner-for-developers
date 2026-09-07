@@ -31,9 +31,12 @@ public class ScanResultViewModel : INotifyPropertyChanged
 
     public CleanupSection Section => Type.Section();
 
-    public string SectionTitle => Section == CleanupSection.Developer
-        ? "Developer Cleanup"
-        : "System Cleanup";
+    public string SectionTitle => Section switch
+    {
+        CleanupSection.Developer => "Developer Cleanup",
+        CleanupSection.Apps => "Application Caches",
+        _ => "System Cleanup"
+    };
 
     public Visibility WarningVisibility => IsWarning ? Visibility.Visible : Visibility.Collapsed;
 

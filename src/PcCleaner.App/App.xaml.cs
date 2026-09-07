@@ -8,6 +8,7 @@ using PcCleaner.Infrastructure.Browser;
 using PcCleaner.Infrastructure.Cleaning;
 using PcCleaner.Infrastructure.DiskAnalyzer;
 using PcCleaner.Infrastructure.Scanners;
+using PcCleaner.Infrastructure.Scanners.Apps;
 using PcCleaner.Infrastructure.Scanners.Developer;
 using Serilog;
 
@@ -101,6 +102,19 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, ComposerCacheScanner>();
         services.AddSingleton<IScanner, VSCodeCacheScanner>();
         services.AddSingleton<IScanner, PlaywrightCacheScanner>();
+        services.AddSingleton<IScanner, GradleCacheScanner>();
+        services.AddSingleton<IScanner, AndroidStudioCacheScanner>();
+        services.AddSingleton<IScanner, NuGetCacheScanner>();
+        services.AddSingleton<IScanner, HuggingFaceCacheScanner>();
+
+        services.AddSingleton<IScanner, TeamsCacheScanner>();
+        services.AddSingleton<IScanner, SlackCacheScanner>();
+        services.AddSingleton<IScanner, DiscordCacheScanner>();
+        services.AddSingleton<IScanner, PnpmCacheScanner>();
+        services.AddSingleton<IScanner, BunCacheScanner>();
+        services.AddSingleton<IScanner, MavenCacheScanner>();
+        services.AddSingleton<IScanner, PipCacheScanner>();
+        services.AddSingleton<IScanner, FlutterPubCacheScanner>();
 
         services.AddSingleton<MainWindow>();
     }
