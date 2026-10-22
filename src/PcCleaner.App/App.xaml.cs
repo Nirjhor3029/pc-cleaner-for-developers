@@ -12,6 +12,7 @@ using PcCleaner.Infrastructure.Scanners;
 using PcCleaner.Infrastructure.Scanners.Apps;
 using PcCleaner.Infrastructure.Scanners.Developer;
 using PcCleaner.Infrastructure.Scanners.SystemCleanup;
+using PcCleaner.Infrastructure.SystemTools;
 using Serilog;
 
 namespace PcCleaner.App;
@@ -22,6 +23,9 @@ public partial class App : System.Windows.Application
 
     /// <summary>Passed when relaunching elevated from SCAN so the new instance starts scanning immediately.</summary>
     public const string AutoScanArgument = "--scan";
+
+    /// <summary>Passed when relaunching elevated from System Tools so it reopens there.</summary>
+    public const string OpenToolsArgument = "--tools";
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -39,6 +43,8 @@ public partial class App : System.Windows.Application
         var mainWindow = Services.GetRequiredService<MainWindow>();
         if (e.Args.Contains(AutoScanArgument))
             mainWindow.Loaded += (_, _) => mainWindow.StartScan(allowElevation: false);
+        if (e.Args.Contains(OpenToolsArgument))
+            mainWindow.Loaded += (_, _) => mainWindow.OpenSystemTools();
         mainWindow.Show();
     }
 
@@ -84,6 +90,7 @@ public partial class App : System.Windows.Application
             .WriteTo.File(logPath,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
+                shared: true, // the elevated instance started from SCAN logs to the same file
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
     }
@@ -136,6 +143,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, ComponentStoreScanner>();
         services.AddSingleton<IScanner, HibernationScanner>();
 
+        services.AddSingleton<ISystemTweak, HibernationTweak>();
+        services.AddSingleton<IStartupManager, WindowsStartupManager>();
+        services.AddSingleton<RestorePointCreator>();
+
         services.AddSingleton<MainWindow>();
+        services.AddTransient<SystemToolsWindow>();
     }
 }

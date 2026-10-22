@@ -26,7 +26,15 @@ public class ScanResultViewModel : INotifyPropertyChanged
     }
 
     public bool IsWarning { get; set; }
-    public string WarningText { get; set; } = string.Empty;
+
+    private string _warningText = string.Empty;
+
+    /// <summary>The UI draws its own warning icon, so a leading "⚠" from a scanner is dropped.</summary>
+    public string WarningText
+    {
+        get => _warningText;
+        set => _warningText = value.TrimStart('⚠', ' ');
+    }
     public int ItemCount { get; set; }
     public bool IsCommandBased { get; set; }
     public bool SizeUnknown { get; set; }
@@ -35,16 +43,16 @@ public class ScanResultViewModel : INotifyPropertyChanged
 
     public string SectionTitle => Section switch
     {
-        CleanupSection.Developer => "Developer Cleanup",
-        CleanupSection.Apps => "Application Caches",
-        _ => "System Cleanup"
+        CleanupSection.Developer => "Developer tools",
+        CleanupSection.Apps => "Apps",
+        _ => "Windows and system"
     };
 
     public Visibility WarningVisibility => IsWarning ? Visibility.Visible : Visibility.Collapsed;
 
     public string Display => IsCommandBased
         ? $"{ItemCount:N0} cleanup task{(ItemCount == 1 ? "" : "s")}"
-        : $"{Name}  ({ItemCount:N0} files)";
+        : $"{ItemCount:N0} files";
 
     public string SizeDisplay => SizeUnknown ? "?" : FormatSize(SizeBytes);
 

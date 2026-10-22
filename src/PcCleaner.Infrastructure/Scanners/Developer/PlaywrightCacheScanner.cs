@@ -73,7 +73,8 @@ public class PlaywrightCacheScanner : IScanner
             return Directory.EnumerateFiles(path, "*", new EnumerationOptions
             {
                 RecurseSubdirectories = true,
-                IgnoreInaccessible = true
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
             });
         }
         catch

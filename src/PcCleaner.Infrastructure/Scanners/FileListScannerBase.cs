@@ -32,7 +32,8 @@ public abstract class FileListScannerBase : IScanner
                     {
                         RecurseSubdirectories = true,
                         IgnoreInaccessible = true,
-                        ReturnSpecialDirectories = false
+                        ReturnSpecialDirectories = false,
+                        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
                     });
                 }
                 catch

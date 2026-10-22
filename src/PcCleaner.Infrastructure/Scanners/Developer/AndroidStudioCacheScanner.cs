@@ -115,7 +115,8 @@ public sealed class AndroidStudioCacheScanner : IScanner
             return Directory.EnumerateFiles(root, "*", new EnumerationOptions
             {
                 RecurseSubdirectories = true,
-                IgnoreInaccessible = true
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
             });
         }
         catch

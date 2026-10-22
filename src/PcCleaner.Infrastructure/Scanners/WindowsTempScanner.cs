@@ -30,7 +30,8 @@ public class WindowsTempScanner : IScanner
             {
                 RecurseSubdirectories = true,
                 IgnoreInaccessible = true,
-                ReturnSpecialDirectories = false
+                ReturnSpecialDirectories = false,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
             });
 
             foreach (var file in files)

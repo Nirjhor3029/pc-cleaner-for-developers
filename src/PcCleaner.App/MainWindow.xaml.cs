@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using PcCleaner.Application.Interfaces;
@@ -23,9 +24,70 @@ public partial class MainWindow : Window
     public MainWindow(IScanService scanService, ICleaner cleaner, IDiskAnalyzer diskAnalyzer)
     {
         InitializeComponent();
+        DarkTitleBar.Enable(this);
         _scanService = scanService;
         _cleaner = cleaner;
         _diskAnalyzer = diskAnalyzer;
+        AdminBadge.Visibility = AdminHelper.IsRunningAsAdmin() ? Visibility.Visible : Visibility.Collapsed;
+        Loaded += (_, _) => UpdateGauge(animate: false);
+    }
+
+    private void SystemToolsButton_Click(object sender, RoutedEventArgs e)
+    {
+        OpenSystemTools();
+    }
+
+    public void OpenSystemTools()
+    {
+        var window = App.Services.GetService(typeof(SystemToolsWindow)) as SystemToolsWindow;
+        if (window == null)
+            return;
+        window.Owner = this;
+        window.Closed += (_, _) => UpdateGauge(animate: false); // e.g. hibernation turned off frees space
+        window.Show();
+    }
+
+    /// <summary>
+    /// Redraws the system-drive capacity bar: used space, the part currently selected
+    /// to clean (taken out of "used"), and free space.
+    /// </summary>
+    private void UpdateGauge(bool animate)
+    {
+        DriveInfo drive;
+        try
+        {
+            drive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\");
+            if (!drive.IsReady)
+                return;
+        }
+        catch
+        {
+            return;
+        }
+
+        long total = drive.TotalSize;
+        long free = drive.TotalFreeSpace;
+        long used = total - free;
+        long selected = Math.Min(SelectedSizeBytes(), used);
+
+        DriveTitle.Text = $"{drive.Name.TrimEnd('\\')} drive";
+        DriveFreeText.Text = $"{FormatSize(free)} free of {FormatSize(total)}";
+        LegendUsed.Text = $"Used {FormatSize(used - selected)}";
+        LegendClean.Text = $"Selected to clean {FormatSize(selected)}";
+        LegendFree.Text = $"Free {FormatSize(free)}";
+
+        GaugeUsedCol.Width = new GridLength(used - selected, GridUnitType.Star);
+        GaugeCleanCol.Width = new GridLength(selected, GridUnitType.Star);
+        GaugeFreeCol.Width = new GridLength(free, GridUnitType.Star);
+
+        if (animate && selected > 0 && SystemParameters.ClientAreaAnimation)
+        {
+            GaugeCleanScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
+                new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(600))
+                {
+                    EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+                });
+        }
     }
 
     private void DiskButton_Click(object sender, RoutedEventArgs e)
@@ -62,14 +124,15 @@ public partial class MainWindow : Window
 
         SetBusy(true);
         ScanButton.IsEnabled = false;
-        ScanButton.Content = "Scanning...";
+        ScanButton.Content = "Scanning";
         StatusText.Text = "Scanning...";
-        ResultsList.Items.Clear();
         ResultsList.ItemsSource = null;
-        EmptyHint.Text = "Click SCAN to find junk files";
-        EmptyHint.Visibility = Visibility.Visible;
+        _scanViewModels = new();
+        EmptyHint.Text = "Scanning";
+        EmptyState.Visibility = Visibility.Visible;
         CleanButton.IsEnabled = false;
-        TotalSizeText.Text = "0 GB";
+        TotalSizeText.Text = "0 B";
+        UpdateGauge(animate: false);
         ProgressBar.Visibility = Visibility.Visible;
         ProgressBar.Value = 0;
 
@@ -116,7 +179,7 @@ public partial class MainWindow : Window
                     // e.g. browser caches while the browser is running
                     vm.IsSelected = false;
                     vm.IsWarning = true;
-                    vm.WarningText = "⚠ App is running - close it and rescan to clean";
+                    vm.WarningText = "The app is running. Close it and scan again to clean this.";
                 }
 
                 viewModels.Add(vm);
@@ -132,11 +195,12 @@ public partial class MainWindow : Window
 
             TotalSizeText.Text = FormatSize(SelectedSizeBytes());
             ResultsList.ItemsSource = grouped;
-            EmptyHint.Visibility = _scanViewModels.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            EmptyState.Visibility = _scanViewModels.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (_scanViewModels.Count == 0)
-                EmptyHint.Text = "Nothing to clean - your PC is tidy";
-            StatusText.Text = $"Scan complete - {_scanViewModels.Count} categories, found {FormatSize(totalSize)}" +
-                (elevationDeclined ? " (no admin - some system items skipped)" : string.Empty);
+                EmptyHint.Text = "Nothing to clean";
+            StatusText.Text = $"Found {FormatSize(totalSize)} in {_scanViewModels.Count} categories." +
+                (elevationDeclined ? " Scanned without admin, so some system items were skipped." : string.Empty);
+            UpdateGauge(animate: true);
             Log.Information("Scan complete: {Categories} categories, total {Size:N0} bytes",
                 _scanViewModels.Count, totalSize);
             CleanButton.IsEnabled = _scanViewModels.Count > 0;
@@ -151,7 +215,7 @@ public partial class MainWindow : Window
             ProgressBar.Visibility = Visibility.Collapsed;
             SetBusy(false);
             ScanButton.IsEnabled = true;
-            ScanButton.Content = "SCAN";
+            ScanButton.Content = "Scan";
         }
     }
 
@@ -256,7 +320,7 @@ public partial class MainWindow : Window
 
             var result = await Task.Run(() => _cleaner.CleanAsync(itemsToClean, progress));
 
-            StatusText.Text = $"Cleaned {FormatSize(result.RemovedBytes)}, skipped {result.FilesSkipped} files - click SCAN to rescan";
+            StatusText.Text = $"Cleaned {FormatSize(result.RemovedBytes)}. Skipped {result.FilesSkipped:N0} items that were in use or protected.";
 
             Log.Information("Cleaning complete: removed={Removed}, skipped={Skipped}, skippedFiles={SkippedFiles}",
                 FormatSize(result.RemovedBytes), FormatSize(result.SkippedBytes), result.FilesSkipped);
@@ -273,6 +337,12 @@ public partial class MainWindow : Window
                 "Cleaning Complete", MessageBoxButton.OK, MessageBoxImage.Information);
 
             _scanResults = null;
+            _scanViewModels = new();
+            ResultsList.ItemsSource = null;
+            EmptyHint.Text = $"Cleaned {FormatSize(result.RemovedBytes)}";
+            EmptyState.Visibility = Visibility.Visible;
+            TotalSizeText.Text = "0 B";
+            UpdateGauge(animate: false);
             CleanButton.IsEnabled = false;
             SetBusy(false);
             ProgressBar.Visibility = Visibility.Collapsed;
@@ -293,6 +363,7 @@ public partial class MainWindow : Window
     {
         ScanButton.IsEnabled = !busy;
         DiskButton.IsEnabled = !busy;
+        SystemToolsButton.IsEnabled = !busy;
         ResultsList.IsEnabled = !busy;
     }
 
@@ -302,6 +373,7 @@ public partial class MainWindow : Window
             return;
 
         TotalSizeText.Text = FormatSize(SelectedSizeBytes());
+        UpdateGauge(animate: false);
     }
 
     private long SelectedSizeBytes()

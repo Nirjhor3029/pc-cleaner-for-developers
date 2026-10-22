@@ -50,6 +50,13 @@ know exactly what is eating your disk before you delete anything.
 - Live drive usage context (`used 95.7 of 100 GB`)
 - Protected system files (`hiberfil.sys`, `pagefile.sys`, …) clearly tagged `SYSTEM`
 
+### System Tools
+Windows settings that are normally scattered across Settings, Control Panel and the command line, in one window:
+- **Hibernation** — Full / Reduced / Off, each with its estimated size on C: and what you gain or lose (via `powercfg`)
+- **Startup apps** — every Run-key and Startup-folder entry with its real program name and publisher; toggles use
+  Task Manager's own `StartupApproved` flags, so nothing is deleted and changes show up in Task Manager too
+- **Create restore point** before changing anything (`Checkpoint-Computer`)
+
 ### Safety & Experience
 - **Scan first, delete second** — two-step flow with per-category selection
 - Live **progress bar** while scanning and cleaning; all controls lock during work
@@ -80,7 +87,7 @@ dotnet run --project src/PcCleaner.App
 ```bash
 dotnet test
 ```
-> 73 unit tests cover the domain model, safety checks, cleaning engine,
+> 92 unit tests cover the domain model, safety checks, cleaning engine,
 > scanners (incl. all-profile browser discovery), the disk analyzer, and
 > progress reporting.
 
@@ -115,6 +122,12 @@ tests/
 - All deletion funnels through the shared `CleaningEngine` (`ICleaner`) with reason-aware error handling (access denied / in use / not found)
 - Progress is reported via `IProgress<T>` (`ScanProgress`, `CleanUpProgress`) so the UI never freezes
 - Deletion is always explicit: items are scanned first, shown to the user, then deleted — **never** blindly
+
+### Design
+"Capacity Gauge": graphite surfaces with a single action colour (iris), amber for anything that needs thought.
+The system drive's capacity bar is the hero element. Titles and sizes use the embedded
+[Bricolage Grotesque](src/PcCleaner.App/Fonts/BricolageGrotesque-OFL.txt) (SIL OFL); body text uses Segoe UI.
+All colours, type and control styles live in `src/PcCleaner.App/Themes/Theme.xaml`.
 
 ### Logging
 Serilog file sink → `%LOCALAPPDATA%\PC-Cleaner\logs\cleaner-YYYYMMDD.log` (7-day retention).

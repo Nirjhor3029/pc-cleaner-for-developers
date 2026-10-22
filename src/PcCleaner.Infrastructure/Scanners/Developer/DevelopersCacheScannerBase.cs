@@ -74,7 +74,8 @@ public abstract class DevelopersCacheScannerBase : IScanner
             return Directory.EnumerateFiles(path, "*", new EnumerationOptions
             {
                 RecurseSubdirectories = true,
-                IgnoreInaccessible = true
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
             });
         }
         catch

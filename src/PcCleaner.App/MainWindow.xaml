@@ -3,192 +3,161 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PcCleaner.App"
         mc:Ignorable="d"
-        Title="PC Cleaner" Height="600" Width="400"
-        WindowStartupLocation="CenterScreen" Background="#1a1a2e" ResizeMode="NoResize">
-    <Window.Resources>
-        <Style x:Key="MainButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.85"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.7"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Opacity" Value="0.35"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        Title="PC Cleaner" Width="560" Height="820" MinWidth="500" MinHeight="660"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource BgBrush}"
+        FontFamily="{StaticResource UiFont}" UseLayoutRounding="True">
 
-        <Style x:Key="ProgressBarStyle" TargetType="ProgressBar">
-            <Setter Property="Height" Value="8"/>
-            <Setter Property="Width" Value="300"/>
-            <Setter Property="Foreground" Value="#22c55e"/>
-            <Setter Property="Background" Value="#2a2a4a"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ProgressBar">
-                        <Border x:Name="Track" Background="#2a2a4a" CornerRadius="4">
-                            <Grid x:Name="PART_Track">
-                                <Border x:Name="PART_Indicator" HorizontalAlignment="Left"
-                                        MinWidth="8" Background="#22c55e" CornerRadius="4"/>
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
-    <Grid Margin="20">
+    <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <TextBlock Grid.Row="0" Text="PC CLEANER"
-                   Foreground="White" FontSize="26" FontWeight="Bold"
-                   HorizontalAlignment="Center" Margin="0,20,0,5"/>
-
-        <TextBlock Grid.Row="0" Text="Scan &amp; remove junk files safely"
-                   Foreground="#8b93a7" FontSize="13"
-                   HorizontalAlignment="Center" Margin="0,58,0,0"/>
-
-        <!-- Total Junk -->
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,25">
-            <TextBlock Text="READY TO CLEAN" Foreground="#8b93a7" FontSize="12"
-                       HorizontalAlignment="Center" FontWeight="SemiBold"/>
-            <TextBlock x:Name="TotalSizeText" Text="0 GB"
-                       Foreground="White" FontSize="40" FontWeight="Bold"
-                       HorizontalAlignment="Center"/>
-        </StackPanel>
-
-        <!-- Scan / Clean Buttons -->
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center"
-                    Margin="0,105,0,10">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button x:Name="ScanButton" Content="SCAN"
-                        Style="{StaticResource MainButtonStyle}"
-                        Background="#e94560" Width="120"
-                        Click="ScanButton_Click"/>
-                <Button x:Name="CleanButton" Content="CLEAN"
-                        Style="{StaticResource MainButtonStyle}"
-                        Background="#0f3460" Width="120" Margin="15,0,0,0"
-                        Click="CleanButton_Click" IsEnabled="False"/>
+        <!-- Header: name on the left, the two other tools as quiet buttons on the right -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="PC Cleaner" Style="{StaticResource Text.Title}"/>
+                    <Border x:Name="AdminBadge" Style="{StaticResource Pill}" Margin="10,2,0,0" Visibility="Collapsed"
+                            ToolTip="Running as administrator - system categories can be scanned and cleaned">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xEA18;" Style="{StaticResource Icon}" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="0,0,5,0"/>
+                            <TextBlock Text="Admin" Style="{StaticResource Text.Caption}" Foreground="{StaticResource FgBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="Measure first, then choose what goes." Style="{StaticResource Text.Caption}"
+                           Margin="0,3,12,0" TextWrapping="Wrap"/>
             </StackPanel>
-            <Button x:Name="DiskButton" Content="DISK ANALYZER  ▸"
-                    Style="{StaticResource MainButtonStyle}"
-                    Background="#533483" Width="255" Margin="0,12,0,0"
-                    Click="DiskButton_Click"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="DiskButton" Content="Disk analyzer" Tag="&#xEDA2;" Style="{StaticResource Btn.Small}"
+                        Click="DiskButton_Click" ToolTip="Find the largest folders on any drive"/>
+                <Button x:Name="SystemToolsButton" Content="System tools" Tag="&#xE713;" Style="{StaticResource Btn.Small}"
+                        Margin="8,0,0,0" Click="SystemToolsButton_Click" ToolTip="Hibernation, startup apps and other Windows settings"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- The capacity gauge: the one bold element -->
+        <StackPanel Grid.Row="1" Margin="0,30,0,0">
+            <Grid>
+                <TextBlock x:Name="DriveTitle" Text="C: drive" Style="{StaticResource Text.Section}"/>
+                <TextBlock x:Name="DriveFreeText" Text="" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+            </Grid>
+            <Border Height="16" CornerRadius="8" Background="{StaticResource MutedBrush}" Margin="0,10,0,0">
+                <Grid x:Name="GaugeGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="GaugeUsedCol" Width="0*"/>
+                        <ColumnDefinition x:Name="GaugeCleanCol" Width="0*"/>
+                        <ColumnDefinition x:Name="GaugeFreeCol" Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" CornerRadius="8,0,0,8" Background="{StaticResource GaugeUsedBrush}"/>
+                    <Border x:Name="GaugeClean" Grid.Column="1" Background="{StaticResource AccentBrush}" RenderTransformOrigin="0,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="GaugeCleanScale" ScaleX="1"/>
+                        </Border.RenderTransform>
+                    </Border>
+                </Grid>
+            </Border>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Ellipse Width="8" Height="8" Fill="{StaticResource GaugeUsedBrush}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LegendUsed" Text="Used" Style="{StaticResource Text.Caption}" Margin="6,0,18,0"/>
+                <Ellipse Width="8" Height="8" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LegendClean" Text="Selected to clean" Style="{StaticResource Text.Caption}" Margin="6,0,18,0"/>
+                <Ellipse Width="8" Height="8" Stroke="{StaticResource FgSubtleBrush}" StrokeThickness="1" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LegendFree" Text="Free" Style="{StaticResource Text.Caption}" Margin="6,0,0,0"/>
+            </StackPanel>
         </StackPanel>
 
-        <!-- Status text -->
-        <TextBlock x:Name="StatusText" Grid.Row="1" Text="Ready"
-                   Foreground="#b8c0d0" FontSize="12"
-                   HorizontalAlignment="Center" Margin="0,214,0,0"/>
+        <!-- Amount + actions -->
+        <Grid Grid.Row="2" Margin="0,28,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="TotalSizeText" Text="0 B" Style="{StaticResource Text.Display}" FontSize="36"
+                           Foreground="{StaticResource AccentBrush}"/>
+                <TextBlock Text="selected to clean" Style="{StaticResource Text.Caption}" Margin="1,-2,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="ScanButton" Content="Scan" Tag="&#xE721;" Style="{StaticResource Btn.Secondary}"
+                        MinWidth="104" Click="ScanButton_Click" ToolTip="Scan as administrator to find system and app junk"/>
+                <Button x:Name="CleanButton" Content="Clean selected" Tag="&#xE74D;" Style="{StaticResource Btn.Accent}"
+                        MinWidth="150" Margin="10,0,0,0" Click="CleanButton_Click" IsEnabled="False"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,16,0,0">
+                <TextBlock x:Name="StatusText" Text="Scan to see what can be cleaned." Style="{StaticResource Text.Caption}"
+                           TextTrimming="CharacterEllipsis"/>
+                <ProgressBar x:Name="ProgressBar" Style="{StaticResource Progress}" Margin="0,8,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+        </Grid>
 
-        <!-- Progress -->
-        <ProgressBar x:Name="ProgressBar" Grid.Row="1"
-                     Style="{StaticResource ProgressBarStyle}"
-                     HorizontalAlignment="Center" Margin="0,236,0,0"
-                     Visibility="Collapsed"/>
-
-        <!-- Results List -->
-        <Border Grid.Row="2" Background="#16213e" CornerRadius="8"
-                Margin="0,20,0,0" BorderBrush="#2a2a4a" BorderThickness="1">
+        <!-- Results: one surface, grouped by section -->
+        <Border Grid.Row="3" Style="{StaticResource Card}" Padding="0,6" Margin="0,18,0,0">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
+                    <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="28" HorizontalAlignment="Center"
+                               Foreground="{StaticResource FgSubtleBrush}"/>
+                    <TextBlock x:Name="EmptyHint" Text="Nothing scanned yet" Style="{StaticResource Text.Heading}"
+                               HorizontalAlignment="Center" Margin="0,12,0,4"/>
+                    <TextBlock Text="Scan checks temp files, caches, developer tools and Windows leftovers. Nothing is deleted until you choose."
+                               Style="{StaticResource Text.Body}" TextAlignment="Center" MaxWidth="320"/>
+                </StackPanel>
 
-                <Grid Grid.Row="0" Margin="15,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="CATEGORY" Foreground="#94a3b8" FontSize="11"
-                               FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Text="SIZE" Foreground="#94a3b8" FontSize="11"
-                               FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                </Grid>
-
-                <TextBlock x:Name="EmptyHint" Grid.Row="1" Text="Click SCAN to find junk files"
-                           Foreground="#7d8aa3" FontSize="13" HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-
-                <ListBox x:Name="ResultsList" Grid.Row="1"
-                         Background="Transparent" BorderThickness="0"
-                         Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         VirtualizingPanel.IsVirtualizing="True">
+                <ListBox x:Name="ResultsList" Background="Transparent" BorderThickness="0"
+                         ItemContainerStyle="{StaticResource Row}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True">
                     <ListBox.GroupStyle>
                         <GroupStyle>
                             <GroupStyle.HeaderTemplate>
                                 <DataTemplate>
-                                    <Border Padding="15,10,15,4" Background="#12172e">
-                                        <TextBlock Text="{Binding Name}" Foreground="#7f5af0" FontSize="13"
-                                                   FontWeight="Bold" FontFamily="Segoe UI"/>
-                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Section}" Margin="20,16,20,4"/>
                                 </DataTemplate>
                             </GroupStyle.HeaderTemplate>
                         </GroupStyle>
                     </ListBox.GroupStyle>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Foreground" Value="White"/>
-                            <Setter Property="Padding" Value="15,6"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border Background="Transparent" Padding="{TemplateBinding Padding}">
-                                            <CheckBox x:Name="chk" IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Name}" Foreground="White" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding Display}" Foreground="#94a3b8" FontSize="11"/>
-                                                        <TextBlock Text="{Binding WarningText}" Foreground="#ffb86c" FontSize="11"
-                                                                   Visibility="{Binding WarningVisibility}"/>
-                                                    </StackPanel>
-                                                    <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}"
-                                                               Foreground="#ccc" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                </Grid>
-                                            </CheckBox>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#1f2b4a"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Style="{StaticResource Check}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Base}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Display}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0"/>
+                                        <Grid Margin="0,5,0,0" Visibility="{Binding WarningVisibility}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="12"
+                                                       Foreground="{StaticResource WarningBrush}" Margin="0,1,6,0" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding WarningText}" Style="{StaticResource Text.Caption}"
+                                                       Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}" Style="{StaticResource Text.Base}"
+                                               FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="14"
+                                               VerticalAlignment="Top" Margin="16,0,0,0"/>
+                                </Grid>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
                 </ListBox>
             </Grid>
         </Border>

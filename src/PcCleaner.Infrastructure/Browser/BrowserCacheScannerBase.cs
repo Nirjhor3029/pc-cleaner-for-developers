@@ -101,7 +101,8 @@ public abstract class BrowserCacheScannerBase : IScanner
             {
                 RecurseSubdirectories = true,
                 IgnoreInaccessible = true,
-                ReturnSpecialDirectories = false
+                ReturnSpecialDirectories = false,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
             });
         }
         catch

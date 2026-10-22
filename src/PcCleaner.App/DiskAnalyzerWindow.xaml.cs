@@ -15,6 +15,7 @@ public partial class DiskAnalyzerWindow : Window
     public DiskAnalyzerWindow(IDiskAnalyzer analyzer)
     {
         InitializeComponent();
+        DarkTitleBar.Enable(this);
         _analyzer = analyzer;
         LoadDrives();
     }
@@ -75,12 +76,15 @@ public partial class DiskAnalyzerWindow : Window
 
         _currentPath = path;
         PathText.Text = path;
-        StatusText.Text = "Scanning folder sizes... (may take a moment)";
+        StatusText.Text = "Measuring folder sizes. Big drives can take a minute.";
         EntryList.ItemsSource = null;
+        LoadingText.Text = $"Measuring {path}";
+        LoadingState.Visibility = Visibility.Visible;
 
         try
         {
             var entries = await _analyzer.GetEntriesAsync(path, token);
+            LoadingState.Visibility = Visibility.Collapsed;
 
             long max = entries.Count > 0 ? entries.Max(e => e.SizeBytes) : 0;
             var viewModels = entries.Select(e =>
@@ -100,14 +104,14 @@ public partial class DiskAnalyzerWindow : Window
                 double total = drive.TotalSize;
                 double pct = total > 0 ? used * 100.0 / total : 0;
                 StatusText.Text =
-                    $"Items: {entries.Count} · Folders total: {DiskEntryViewModel.FormatSize(shownBytes)} · " +
-                    $"Drive {drive.Name} used: {FormatGb(used)} of {FormatGb(total)} ({pct:0.0}%) · " +
-                    (entries.Count > 0 ? $"Largest: {viewModels[0].Name} ({viewModels[0].SizeDisplay})" : "");
+                    $"{entries.Count} items, {DiskEntryViewModel.FormatSize(shownBytes)} in this folder. " +
+                    $"Drive {drive.Name.TrimEnd('\\')} is {pct:0}% full ({FormatGb(used)} of {FormatGb(total)})." +
+                    (entries.Count > 0 ? $" Largest: {viewModels[0].Name}, {viewModels[0].SizeDisplay}." : "");
             }
             else
             {
-                StatusText.Text = $"Items: {entries.Count} · Total: {DiskEntryViewModel.FormatSize(shownBytes)} · " +
-                                  (entries.Count > 0 ? $"Largest: {viewModels[0].Name} ({viewModels[0].SizeDisplay})" : "-");
+                StatusText.Text = $"{entries.Count} items, {DiskEntryViewModel.FormatSize(shownBytes)} in this folder." +
+                                  (entries.Count > 0 ? $" Largest: {viewModels[0].Name}, {viewModels[0].SizeDisplay}." : "");
             }
         }
         catch (OperationCanceledException)
@@ -116,7 +120,8 @@ public partial class DiskAnalyzerWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Scan failed: {ex.Message}";
+            LoadingState.Visibility = Visibility.Collapsed;
+            StatusText.Text = $"Couldn't measure {path}: {ex.Message}";
         }
     }
 

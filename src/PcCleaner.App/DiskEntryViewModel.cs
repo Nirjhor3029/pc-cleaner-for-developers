@@ -13,7 +13,7 @@ public class DiskEntryViewModel
     public long FileCount => Entry.FileCount;
     public bool IsProtected => Entry.IsProtected;
 
-    public string TypeIcon => IsDirectory ? "📁" : "📄";
+    public string TypeIcon => IsDirectory ? "" : ""; // Segoe MDL2 open folder / page
     public string SizeDisplay => FormatSize(SizeBytes);
     public string FileCountDisplay => IsDirectory ? $"{FileCount:N0} files" : "";
     public double BarPercent { get; set; }

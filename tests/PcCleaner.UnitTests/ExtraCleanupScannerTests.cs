@@ -109,6 +109,25 @@ public class ExtraCleanupScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task CacheScanner_DoesNotFollowJunctions_OutOfTheCache()
+    {
+        MakeFile(@"cache\real.bin", 10);
+        var outside = MakeFile(@"outside\precious.docx", 999);
+        var junction = Path.Combine(_tempRoot, @"cache\link");
+        // Junctions need no admin rights (bun's cache is full of them)
+        var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe",
+            $"/c mklink /J \"{junction}\" \"{Path.GetDirectoryName(outside)}\"") { CreateNoWindow = true, UseShellExecute = false })!;
+        mklink.WaitForExit();
+        Assert.True(Directory.Exists(Path.Combine(junction)), "junction was not created");
+
+        var result = await new NpmCacheScanner().ScanPathAsync(Path.Combine(_tempRoot, "cache"));
+
+        var item = Assert.Single(result.Items);
+        Assert.EndsWith("real.bin", item.FilePath);
+        Directory.Delete(junction); // removes only the link, before Dispose deletes the tree
+    }
+
+    [Fact]
     public void DockerCompact_NoVhdx_ReturnsEmpty()
     {
         var result = new DockerDiskCompactScanner().Scan(Path.Combine(_tempRoot, "none"), Path.Combine(_tempRoot, "s"), false);
