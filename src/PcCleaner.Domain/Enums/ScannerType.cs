@@ -27,5 +27,12 @@ public enum ScannerType
     BunCache,
     MavenCache,
     PipCache,
-    FlutterPubCache
+    FlutterPubCache,
+    WindowsErrorReporting,
+    ShaderCache,
+    WindowsOld,
+    WindowsUpgradeFiles,
+    ComponentStore,
+    DockerCleanup,
+    DockerVolumes
 }

@@ -45,6 +45,7 @@ public partial class MainWindow : Window
         StatusText.Text = "Scanning...";
         ResultsList.Items.Clear();
         ResultsList.ItemsSource = null;
+        EmptyHint.Text = "Click SCAN to find junk files";
         EmptyHint.Visibility = Visibility.Visible;
         CleanButton.IsEnabled = false;
         TotalSizeText.Text = "0 GB";
@@ -71,6 +72,10 @@ public partial class MainWindow : Window
             var viewModels = new List<ScanResultViewModel>();
             foreach (var result in _scanResults)
             {
+                // Hide categories with nothing to clean (tool not installed, cache already empty)
+                if (result.ItemCount == 0)
+                    continue;
+
                 totalSize += result.TotalSizeBytes;
                 var vm = new ScanResultViewModel
                 {
@@ -78,20 +83,19 @@ public partial class MainWindow : Window
                     Type = result.Type,
                     SizeBytes = result.TotalSizeBytes,
                     ItemCount = result.ItemCount,
-                    IsSelected = true
+                    IsCommandBased = result.Items.All(i => i.Command != null),
+                    SizeUnknown = result.SizeUnknown,
+                    IsSelected = result.SelectedByDefault,
+                    IsWarning = !string.IsNullOrEmpty(result.Warning),
+                    WarningText = result.Warning ?? string.Empty
                 };
 
-                if (result.Type == ScannerType.PlaywrightCache)
+                if (result.Items.All(i => !i.IsDeletable))
                 {
+                    // e.g. browser caches while the browser is running
                     vm.IsSelected = false;
                     vm.IsWarning = true;
-                    vm.WarningText = "⚠ Re-downloaded on next run";
-                }
-                else if (result.Type == ScannerType.HuggingFaceCache)
-                {
-                    vm.IsSelected = false;
-                    vm.IsWarning = true;
-                    vm.WarningText = "⚠ Re-downloaded on next run";
+                    vm.WarningText = "⚠ App is running - close it and rescan to clean";
                 }
 
                 viewModels.Add(vm);
@@ -107,11 +111,13 @@ public partial class MainWindow : Window
 
             TotalSizeText.Text = FormatSize(SelectedSizeBytes());
             ResultsList.ItemsSource = grouped;
-            EmptyHint.Visibility = _scanResults.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            StatusText.Text = $"Scan complete - {_scanResults.Count} categories, found {FormatSize(totalSize)}";
+            EmptyHint.Visibility = _scanViewModels.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (_scanViewModels.Count == 0)
+                EmptyHint.Text = "Nothing to clean - your PC is tidy";
+            StatusText.Text = $"Scan complete - {_scanViewModels.Count} categories, found {FormatSize(totalSize)}";
             Log.Information("Scan complete: {Categories} categories, total {Size:N0} bytes",
-                _scanResults.Count, totalSize);
-            CleanButton.IsEnabled = true;
+                _scanViewModels.Count, totalSize);
+            CleanButton.IsEnabled = _scanViewModels.Count > 0;
         }
         catch (Exception ex)
         {
@@ -132,26 +138,11 @@ public partial class MainWindow : Window
         if (_scanResults == null)
             return;
 
-        var selectedItems = new List<ScanItem>();
-        long totalSelected = 0;
-        bool adminCategorySelected = false;
-
-        for (int i = 0; i < _scanResults.Count; i++)
-        {
-            var result = _scanResults[i];
-            var vm = _scanViewModels.FirstOrDefault(v => v.Type == result.Type);
-            if (vm == null || !vm.IsSelected)
-                continue;
-
-            if (IsAdminCategory(result.Type))
-                adminCategorySelected = true;
-
-            foreach (var item in result.Items)
-            {
-                selectedItems.Add(item);
-            }
-            totalSelected += result.TotalSizeBytes;
-        }
+        var selectedTypes = _scanViewModels.Where(v => v.IsSelected).Select(v => v.Type).ToHashSet();
+        var selectedResults = _scanResults.Where(r => selectedTypes.Contains(r.Type)).ToList();
+        var selectedItems = selectedResults.SelectMany(r => r.Items).ToList();
+        long totalSelected = selectedResults.Sum(r => r.TotalSizeBytes);
+        bool adminCategorySelected = selectedResults.Any(r => r.RequiresAdmin);
 
         if (selectedItems.Count == 0)
         {
@@ -189,8 +180,9 @@ public partial class MainWindow : Window
                 return;
             }
 
-            itemsToClean = selectedItems
-                .Where(item => !IsAdminCategory(FindCategoryType(item)))
+            itemsToClean = selectedResults
+                .Where(r => !r.RequiresAdmin)
+                .SelectMany(r => r.Items)
                 .ToList();
 
             if (itemsToClean.Count == 0)
@@ -210,7 +202,10 @@ public partial class MainWindow : Window
         }
 
         var confirm = MessageBox.Show(
-            $"Clean {FormatSize(itemsToClean.Sum(i => i.SizeBytes))} from {itemsToClean.Count:N0} files?",
+            $"Clean {FormatSize(itemsToClean.Sum(i => i.SizeBytes))} from {itemsToClean.Count:N0} items?" +
+            (itemsToClean.Any(i => i.Command != null)
+                ? "\n\nSystem tools (Docker / Disk Cleanup / DISM) will run and may take several minutes."
+                : string.Empty),
             "Confirm Cleaning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
         if (confirm != MessageBoxResult.Yes)
@@ -290,27 +285,6 @@ public partial class MainWindow : Window
     private long SelectedSizeBytes()
     {
         return _scanViewModels.Where(v => v.IsSelected).Sum(v => v.SizeBytes);
-    }
-
-    private static bool IsAdminCategory(ScannerType type)
-    {
-        return type is ScannerType.WindowsTemp
-            || type is ScannerType.WindowsUpdateCache
-            || type is ScannerType.DeliveryOptimization;
-    }
-
-    private ScannerType FindCategoryType(ScanItem item)
-    {
-        if (_scanResults == null)
-            return ScannerType.UserTemp;
-
-        foreach (var result in _scanResults)
-        {
-            if (result.Items.Any(i => i.FilePath == item.FilePath))
-                return result.Type;
-        }
-
-        return ScannerType.UserTemp;
     }
 
     private string FormatSize(long bytes)

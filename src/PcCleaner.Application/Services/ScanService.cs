@@ -32,15 +32,34 @@ public class ScanService : IScanService
                 Total = scanners.Count,
                 CategoryName = scanners[i].Name
             });
-            var result = await scanners[i].ScanAsync();
-            results.Add(result);
+            results.Add(await RunIsolatedAsync(scanners[i]));
         }
         return results;
+    }
+
+    /// <summary>
+    /// Several scanners do their file enumeration synchronously before returning
+    /// a completed Task, so run each on the thread pool to keep the UI responsive.
+    /// A failing scanner yields an empty result instead of aborting the whole scan.
+    /// </summary>
+    private static async Task<ScanResult> RunIsolatedAsync(IScanner scanner)
+    {
+        ScanResult result;
+        try
+        {
+            result = await Task.Run(scanner.ScanAsync);
+        }
+        catch
+        {
+            result = new ScanResult { ScannerName = scanner.Name, Type = scanner.Type };
+        }
+        result.RequiresAdmin = scanner.RequiresAdmin;
+        return result;
     }
 
     public async Task<ScanResult> RunScannerAsync(ScannerType type)
     {
         var scanner = _scanners.First(s => s.Type == type);
-        return await scanner.ScanAsync();
+        return await RunIsolatedAsync(scanner);
     }
 }

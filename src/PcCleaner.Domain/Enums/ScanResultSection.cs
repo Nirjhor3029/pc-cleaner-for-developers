@@ -26,7 +26,9 @@ public static class ScannerTypeExtensions
                 or ScannerType.BunCache
                 or ScannerType.MavenCache
                 or ScannerType.PipCache
-                or ScannerType.FlutterPubCache => CleanupSection.Developer,
+                or ScannerType.FlutterPubCache
+                or ScannerType.DockerCleanup
+                or ScannerType.DockerVolumes => CleanupSection.Developer,
             ScannerType.TeamsCache
                 or ScannerType.SlackCache
                 or ScannerType.DiscordCache => CleanupSection.Apps,

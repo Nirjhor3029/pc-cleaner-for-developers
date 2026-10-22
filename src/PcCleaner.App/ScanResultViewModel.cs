@@ -28,6 +28,8 @@ public class ScanResultViewModel : INotifyPropertyChanged
     public bool IsWarning { get; set; }
     public string WarningText { get; set; } = string.Empty;
     public int ItemCount { get; set; }
+    public bool IsCommandBased { get; set; }
+    public bool SizeUnknown { get; set; }
 
     public CleanupSection Section => Type.Section();
 
@@ -40,9 +42,11 @@ public class ScanResultViewModel : INotifyPropertyChanged
 
     public Visibility WarningVisibility => IsWarning ? Visibility.Visible : Visibility.Collapsed;
 
-    public string Display => $"{Name}  ({ItemCount:N0} files)";
+    public string Display => IsCommandBased
+        ? $"{ItemCount:N0} cleanup task{(ItemCount == 1 ? "" : "s")}"
+        : $"{Name}  ({ItemCount:N0} files)";
 
-    public string SizeDisplay => FormatSize(SizeBytes);
+    public string SizeDisplay => SizeUnknown ? "?" : FormatSize(SizeBytes);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

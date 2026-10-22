@@ -44,6 +44,14 @@ public class SafetyCheckerTests : IDisposable
     }
 
     [Fact]
+    public void IsWithinAllowedDirectory_ReturnsFalse_ForSiblingWithSharedPrefix()
+    {
+        var sibling = Path.Combine(_tempRoot + "2", "file.tmp");
+
+        Assert.False(_checker.IsWithinAllowedDirectory(sibling, _tempRoot));
+    }
+
+    [Fact]
     public void IsSafeToDelete_ReturnsTrue_ForNormalFileInAllowedDir()
     {
         var file = Path.Combine(_tempRoot, "junk.tmp");

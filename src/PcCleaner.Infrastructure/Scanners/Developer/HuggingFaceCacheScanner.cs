@@ -26,7 +26,13 @@ public sealed class HuggingFaceCacheScanner : IScanner
 
     internal Task<ScanResult> ScanPathAsync(string? path)
     {
-        var result = new ScanResult { ScannerName = Name, Type = Type };
+        var result = new ScanResult
+        {
+            ScannerName = Name,
+            Type = Type,
+            SelectedByDefault = false,
+            Warning = "⚠ Re-downloaded on next run"
+        };
         if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
             return Task.FromResult(result);
 

@@ -23,7 +23,13 @@ public class PlaywrightCacheScanner : IScanner
 
     internal Task<ScanResult> ScanDirectoryAsync(string root)
     {
-        var result = new ScanResult { ScannerName = Name, Type = Type };
+        var result = new ScanResult
+        {
+            ScannerName = Name,
+            Type = Type,
+            SelectedByDefault = false,
+            Warning = "⚠ Re-downloaded on next run"
+        };
         if (!Directory.Exists(root))
             return Task.FromResult(result);
 

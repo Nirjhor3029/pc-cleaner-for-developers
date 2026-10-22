@@ -40,7 +40,9 @@ public class SafetyChecker
         var fullPath = Path.GetFullPath(filePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var allowedFullPath = Path.GetFullPath(allowedBasePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-        return fullPath.StartsWith(allowedFullPath, StringComparison.OrdinalIgnoreCase);
+        // Require a separator after the base so "C:\Temp2" is not treated as inside "C:\Temp"
+        return fullPath.Equals(allowedFullPath, StringComparison.OrdinalIgnoreCase)
+            || fullPath.StartsWith(allowedFullPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     public bool IsFileLocked(string filePath)

@@ -6,10 +6,12 @@ using PcCleaner.Application.Services;
 using PcCleaner.Domain.Interfaces;
 using PcCleaner.Infrastructure.Browser;
 using PcCleaner.Infrastructure.Cleaning;
+using PcCleaner.Infrastructure.Commands;
 using PcCleaner.Infrastructure.DiskAnalyzer;
 using PcCleaner.Infrastructure.Scanners;
 using PcCleaner.Infrastructure.Scanners.Apps;
 using PcCleaner.Infrastructure.Scanners.Developer;
+using PcCleaner.Infrastructure.Scanners.SystemCleanup;
 using Serilog;
 
 namespace PcCleaner.App;
@@ -83,6 +85,7 @@ public partial class App : System.Windows.Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
         services.AddSingleton<ICleaner, CleaningEngine>();
         services.AddSingleton<IScanService, ScanService>();
         services.AddSingleton<IDiskAnalyzer, FolderSizeScanner>();
@@ -115,6 +118,14 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, MavenCacheScanner>();
         services.AddSingleton<IScanner, PipCacheScanner>();
         services.AddSingleton<IScanner, FlutterPubCacheScanner>();
+        services.AddSingleton<IScanner, DockerCleanupScanner>();
+        services.AddSingleton<IScanner, DockerVolumesScanner>();
+
+        services.AddSingleton<IScanner, WindowsErrorReportingScanner>();
+        services.AddSingleton<IScanner, ShaderCacheScanner>();
+        services.AddSingleton<IScanner, WindowsUpgradeFilesScanner>();
+        services.AddSingleton<IScanner, WindowsOldScanner>();
+        services.AddSingleton<IScanner, ComponentStoreScanner>();
 
         services.AddSingleton<MainWindow>();
     }

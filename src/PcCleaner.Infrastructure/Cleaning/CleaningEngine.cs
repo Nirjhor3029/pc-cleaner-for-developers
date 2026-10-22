@@ -1,13 +1,21 @@
 using PcCleaner.Domain.Interfaces;
 using PcCleaner.Domain.Models;
+using PcCleaner.Infrastructure.Commands;
 using Serilog;
 
 namespace PcCleaner.Infrastructure.Cleaning;
 
 public class CleaningEngine : ICleaner
 {
-    public CleaningEngine()
+    private readonly ICommandRunner _commandRunner;
+
+    public CleaningEngine() : this(new ProcessCommandRunner())
     {
+    }
+
+    public CleaningEngine(ICommandRunner commandRunner)
+    {
+        _commandRunner = commandRunner;
     }
 
     public Task<CleaningResult> CleanAsync(List<ScanItem> items)
@@ -38,6 +46,20 @@ public class CleaningEngine : ICleaner
                 result.FilesSkipped++;
                 result.SkippedBytes += item.SizeBytes;
                 result.SkippedReasons.Add($"{item.FilePath}: Marked as non-deletable");
+                ReportProgress(progress, total, processed, item.FilePath);
+                continue;
+            }
+
+            if (item.Command != null)
+            {
+                // Commands can run for minutes; show which one before it starts
+                progress?.Report(new CleanUpProgress
+                {
+                    TotalFiles = total,
+                    FilesProcessed = processed - 1,
+                    CurrentPath = item.FilePath
+                });
+                RunCommand(item, result);
                 ReportProgress(progress, total, processed, item.FilePath);
                 continue;
             }
@@ -91,6 +113,35 @@ public class CleaningEngine : ICleaner
             result.FilesDeleted, result.FilesSkipped, result.RemovedBytes, result.SkippedBytes);
 
         return Task.FromResult(result);
+    }
+
+    private void RunCommand(ScanItem item, CleaningResult result)
+    {
+        var command = item.Command!;
+        Log.Information("Running cleanup command: {File} {Args}", command.FileName, command.Arguments);
+
+        try
+        {
+            var outcome = _commandRunner.Run(command.FileName, command.Arguments);
+            if (outcome.Succeeded)
+            {
+                result.FilesDeleted++;
+                result.RemovedBytes += item.SizeBytes;
+                return;
+            }
+
+            Log.Warning("Cleanup command failed ({Code}): {Error}", outcome.ExitCode, outcome.StandardError.Trim());
+            result.FilesSkipped++;
+            result.SkippedBytes += item.SizeBytes;
+            result.SkippedReasons.Add($"{item.FilePath}: command failed (exit code {outcome.ExitCode})");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Cleanup command could not be started");
+            result.FilesSkipped++;
+            result.SkippedBytes += item.SizeBytes;
+            result.SkippedReasons.Add($"{item.FilePath}: {ex.Message}");
+        }
     }
 
     private static void ReportProgress(IProgress<CleanUpProgress>? progress, int total, int processed, string path)
