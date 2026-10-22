@@ -20,6 +20,9 @@ public partial class App : System.Windows.Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
+    /// <summary>Passed when relaunching elevated from SCAN so the new instance starts scanning immediately.</summary>
+    public const string AutoScanArgument = "--scan";
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -34,6 +37,8 @@ public partial class App : System.Windows.Application
         Log.Information("PC Cleaner started");
 
         var mainWindow = Services.GetRequiredService<MainWindow>();
+        if (e.Args.Contains(AutoScanArgument))
+            mainWindow.Loaded += (_, _) => mainWindow.StartScan(allowElevation: false);
         mainWindow.Show();
     }
 
@@ -120,12 +125,16 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, FlutterPubCacheScanner>();
         services.AddSingleton<IScanner, DockerCleanupScanner>();
         services.AddSingleton<IScanner, DockerVolumesScanner>();
+        services.AddSingleton<IScanner, DockerDiskCompactScanner>();
+        services.AddSingleton<IScanner, NpmGlobalLeftoversScanner>();
+        services.AddSingleton<IScanner, WpsOfficeScanner>();
 
         services.AddSingleton<IScanner, WindowsErrorReportingScanner>();
         services.AddSingleton<IScanner, ShaderCacheScanner>();
         services.AddSingleton<IScanner, WindowsUpgradeFilesScanner>();
         services.AddSingleton<IScanner, WindowsOldScanner>();
         services.AddSingleton<IScanner, ComponentStoreScanner>();
+        services.AddSingleton<IScanner, HibernationScanner>();
 
         services.AddSingleton<MainWindow>();
     }

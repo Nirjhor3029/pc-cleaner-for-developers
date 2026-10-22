@@ -43,3 +43,5 @@ Desktop.ini
 # ===== Dotnet tools =====
 *.tmp_proj
 *.ide/state.iml
+# ===== Portable build output =====
+dist/

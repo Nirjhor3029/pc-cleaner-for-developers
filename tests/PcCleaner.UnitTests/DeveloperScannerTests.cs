@@ -353,13 +353,17 @@ public class BrowserProfileDiscoveryTests : IDisposable
             File.WriteAllBytes(Path.Combine(cacheDir, "f1"), new byte[10]);
             File.WriteAllBytes(Path.Combine(codeCache, "f2"), new byte[10]);
         }
-        // A non-profile dir must be ignored
-        Directory.CreateDirectory(Path.Combine(_tempRoot, "GrShaderCache"));
+        // Non-cache root dirs must be ignored; known root caches are included
+        Directory.CreateDirectory(Path.Combine(_tempRoot, "Safe Browsing"));
+        File.WriteAllBytes(Path.Combine(_tempRoot, "Safe Browsing", "keep"), new byte[10]);
+        Directory.CreateDirectory(Path.Combine(_tempRoot, "extensions_crx_cache"));
+        File.WriteAllBytes(Path.Combine(_tempRoot, "extensions_crx_cache", "ext.crx"), new byte[10]);
 
         var chrome = new ChromeCacheScanner();
         var result = await chrome.ScanProfilesAsync(_tempRoot);
 
-        Assert.Equal(8, result.ItemCount);
+        Assert.Equal(9, result.ItemCount);
+        Assert.DoesNotContain(result.Items, i => i.FilePath.Contains("Safe Browsing"));
         Assert.All(result.Items, i => Assert.True(i.FilePath.Contains(_tempRoot)));
     }
 

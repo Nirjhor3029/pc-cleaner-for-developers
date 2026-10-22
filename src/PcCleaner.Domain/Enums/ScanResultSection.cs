@@ -28,10 +28,13 @@ public static class ScannerTypeExtensions
                 or ScannerType.PipCache
                 or ScannerType.FlutterPubCache
                 or ScannerType.DockerCleanup
-                or ScannerType.DockerVolumes => CleanupSection.Developer,
+                or ScannerType.DockerVolumes
+                or ScannerType.DockerDiskCompact
+                or ScannerType.NpmGlobalLeftovers => CleanupSection.Developer,
             ScannerType.TeamsCache
                 or ScannerType.SlackCache
-                or ScannerType.DiscordCache => CleanupSection.Apps,
+                or ScannerType.DiscordCache
+                or ScannerType.WpsOffice => CleanupSection.Apps,
             _ => CleanupSection.System
         };
     }

@@ -34,5 +34,9 @@ public enum ScannerType
     WindowsUpgradeFiles,
     ComponentStore,
     DockerCleanup,
-    DockerVolumes
+    DockerVolumes,
+    DockerDiskCompact,
+    NpmGlobalLeftovers,
+    WpsOffice,
+    Hibernation
 }

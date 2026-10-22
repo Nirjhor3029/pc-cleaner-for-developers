@@ -22,6 +22,7 @@ know exactly what is eating your disk before you delete anything.
 - **Windows Error Reporting** archives/queues · **Shader Cache** (DirectX, NVIDIA, AMD, Intel)
 - **Windows Upgrade Files** (`$Windows.~BT`, `$Windows.~WS`, ESD) and **Old Windows Installation**
   (`Windows.old`, ⚠ off by default — removes rollback) via the built-in Disk Cleanup handlers
+- **Turn Off Hibernation** — removes `hiberfil.sys` via `powercfg /hibernate off` (⚠ off by default)
 - **Component Store (WinSxS)** via `DISM /StartComponentCleanup` (⚠ off by default, slow) — WinSxS is never touched directly
 
 ### Developer Cleanup
@@ -35,10 +36,13 @@ know exactly what is eating your disk before you delete anything.
 - **Playwright Browsers** (⚠ re-downloaded on next run, off by default)
 - **Docker** build cache, unused images and stopped containers via `docker system df` + `prune`;
   **unused volumes** listed separately (⚠ off by default — may contain app data). Skipped when Docker isn't running
+- **Compact Docker Disk** — shrinks Docker's WSL `.vhdx` with diskpart so pruned space returns to C: (⚠ off by default, close Docker first)
 - **Chrome & Edge** caches across *all* profiles (`Cache`, `Code Cache`, `GPUCache`) — bookmarks, history, cookies and passwords are never touched
 
 ### Application Cleanup
 - **Microsoft Teams** (Cache / Code Cache / GPUCache / blob_storage / logs)
+- **WPS Office** — old version folders left by auto-update (newest/running kept), downloaded update installers, cache, logs
+- **npm global update leftovers** (`node_modules\.pkg-XXXXXXXX` folders from interrupted updates)
 - **Slack** · **Discord** caches — chat history and signed-in data are never touched
 
 ### Disk Analyzer
@@ -49,7 +53,7 @@ know exactly what is eating your disk before you delete anything.
 ### Safety & Experience
 - **Scan first, delete second** — two-step flow with per-category selection
 - Live **progress bar** while scanning and cleaning; all controls lock during work
-- Admin elevation requested only when needed (Windows Temp, Windows Update, Delivery Optimization)
+- **SCAN runs as administrator** (relaunches elevated and starts scanning), so CLEAN never needs a second permission prompt + rescan
 - Categories with nothing to clean (tool not installed, cache empty) are hidden
 - Grouped results: **System Cleanup** / **Developer Cleanup** / **Application Caches** with live "ready to clean" total
 - Detailed cleaning report (deleted / skipped / reasons)
@@ -76,7 +80,7 @@ dotnet run --project src/PcCleaner.App
 ```bash
 dotnet test
 ```
-> 67 unit tests cover the domain model, safety checks, cleaning engine,
+> 73 unit tests cover the domain model, safety checks, cleaning engine,
 > scanners (incl. all-profile browser discovery), the disk analyzer, and
 > progress reporting.
 
@@ -146,5 +150,5 @@ Serilog file sink → `%LOCALAPPDATA%\PC-Cleaner\logs\cleaner-YYYYMMDD.log` (7-d
 
 - Developer Mode (auto-detect installed toolchains)
 - Large Files view in the Disk Analyzer
-- Hibernation / System Restore space info
+- System Restore space info
 - Stopwatch & space-recovered history dashboard

@@ -39,6 +39,27 @@ public partial class MainWindow : Window
 
     private void ScanButton_Click(object sender, RoutedEventArgs e)
     {
+        StartScan(allowElevation: true);
+    }
+
+    /// <summary>
+    /// Scans as administrator so admin-only categories (Windows Temp, Update cache, …)
+    /// are found and can be cleaned without a second elevation + rescan. If not elevated,
+    /// restarts elevated with --scan; if the UAC prompt is declined, scans without admin.
+    /// </summary>
+    public void StartScan(bool allowElevation)
+    {
+        bool elevationDeclined = false;
+        if (allowElevation && !AdminHelper.IsRunningAsAdmin())
+        {
+            if (AdminHelper.Elevate(App.AutoScanArgument))
+            {
+                Close();
+                return;
+            }
+            elevationDeclined = true;
+        }
+
         SetBusy(true);
         ScanButton.IsEnabled = false;
         ScanButton.Content = "Scanning...";
@@ -52,10 +73,10 @@ public partial class MainWindow : Window
         ProgressBar.Visibility = Visibility.Visible;
         ProgressBar.Value = 0;
 
-        _ = PerformScanAsync();
+        _ = PerformScanAsync(elevationDeclined);
     }
 
-    private async Task PerformScanAsync()
+    private async Task PerformScanAsync(bool elevationDeclined)
     {
         Log.Information("Scan started");
         try
@@ -114,7 +135,8 @@ public partial class MainWindow : Window
             EmptyHint.Visibility = _scanViewModels.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (_scanViewModels.Count == 0)
                 EmptyHint.Text = "Nothing to clean - your PC is tidy";
-            StatusText.Text = $"Scan complete - {_scanViewModels.Count} categories, found {FormatSize(totalSize)}";
+            StatusText.Text = $"Scan complete - {_scanViewModels.Count} categories, found {FormatSize(totalSize)}" +
+                (elevationDeclined ? " (no admin - some system items skipped)" : string.Empty);
             Log.Information("Scan complete: {Categories} categories, total {Size:N0} bytes",
                 _scanViewModels.Count, totalSize);
             CleanButton.IsEnabled = _scanViewModels.Count > 0;

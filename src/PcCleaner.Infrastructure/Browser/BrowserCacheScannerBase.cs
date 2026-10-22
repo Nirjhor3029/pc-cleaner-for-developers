@@ -14,7 +14,13 @@ namespace PcCleaner.Infrastructure.Browser;
 /// </summary>
 public abstract class BrowserCacheScannerBase : IScanner
 {
-    private static readonly string[] CacheSubDirs = { "Cache", "Code Cache", "GPUCache" };
+    private static readonly string[] CacheSubDirs = { "Cache", "Code Cache", "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache" };
+
+    /// <summary>Re-downloadable / regenerated caches directly under User Data, shared by all profiles.</summary>
+    private static readonly string[] RootCacheDirs =
+    {
+        "extensions_crx_cache", "component_crx_cache", "GrShaderCache", "ShaderCache", "GraphiteDawnCache"
+    };
 
     public abstract string Name { get; }
     public abstract ScannerType Type { get; }
@@ -46,6 +52,9 @@ public abstract class BrowserCacheScannerBase : IScanner
                     continue;
                 TryAddProfileDir(profileDir, browserRunning, result);
             }
+
+            foreach (var rootCache in RootCacheDirs)
+                AddCacheDir(Path.Combine(userDataRoot, rootCache), browserRunning, result);
             return result;
         });
     }
@@ -56,28 +65,30 @@ public abstract class BrowserCacheScannerBase : IScanner
             return;
 
         foreach (var cacheSub in CacheSubDirs)
-        {
-            var cachePath = Path.Combine(profileDir, cacheSub);
-            if (!Directory.Exists(cachePath))
-                continue;
+            AddCacheDir(Path.Combine(profileDir, cacheSub), browserRunning, result);
+    }
 
-            foreach (var file in SafeEnumerateFiles(cachePath))
+    private static void AddCacheDir(string cachePath, bool browserRunning, ScanResult result)
+    {
+        if (!Directory.Exists(cachePath))
+            return;
+
+        foreach (var file in SafeEnumerateFiles(cachePath))
+        {
+            try
             {
-                try
+                var info = new FileInfo(file);
+                result.Items.Add(new ScanItem
                 {
-                    var info = new FileInfo(file);
-                    result.Items.Add(new ScanItem
-                    {
-                        FilePath = info.FullName,
-                        SizeBytes = info.Length,
-                        IsSelected = true,
-                        IsDeletable = !browserRunning
-                    });
-                }
-                catch
-                {
-                    // skip file that can't be accessed
-                }
+                    FilePath = info.FullName,
+                    SizeBytes = info.Length,
+                    IsSelected = true,
+                    IsDeletable = !browserRunning
+                });
+            }
+            catch
+            {
+                // skip file that can't be accessed
             }
         }
     }
