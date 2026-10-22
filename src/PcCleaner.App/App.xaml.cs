@@ -4,14 +4,19 @@ using Microsoft.Extensions.DependencyInjection;
 using PcCleaner.Application.Interfaces;
 using PcCleaner.Application.Services;
 using PcCleaner.Domain.Interfaces;
+using PcCleaner.App.ViewModels;
 using PcCleaner.Infrastructure.Browser;
 using PcCleaner.Infrastructure.Cleaning;
 using PcCleaner.Infrastructure.Commands;
 using PcCleaner.Infrastructure.DiskAnalyzer;
+using PcCleaner.Infrastructure.Health;
+using PcCleaner.Infrastructure.History;
+using PcCleaner.Infrastructure.Monitoring;
 using PcCleaner.Infrastructure.Scanners;
 using PcCleaner.Infrastructure.Scanners.Apps;
 using PcCleaner.Infrastructure.Scanners.Developer;
 using PcCleaner.Infrastructure.Scanners.SystemCleanup;
+using PcCleaner.Infrastructure.SystemInfo;
 using PcCleaner.Infrastructure.SystemTools;
 using Serilog;
 
@@ -38,14 +43,15 @@ public partial class App : System.Windows.Application
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
-        Log.Information("PC Cleaner started");
+        Log.Information("PC Cleaner started — Performance & Health Manager");
 
-        var mainWindow = Services.GetRequiredService<MainWindow>();
+        var shell = Services.GetRequiredService<ShellWindow>();
+        // Relaunched elevated from the cleaner or System Tools: go straight back there
         if (e.Args.Contains(AutoScanArgument))
-            mainWindow.Loaded += (_, _) => mainWindow.StartScan(allowElevation: false);
+            shell.Loaded += (_, _) => shell.OpenCleaner(startScan: true);
         if (e.Args.Contains(OpenToolsArgument))
-            mainWindow.Loaded += (_, _) => mainWindow.OpenSystemTools();
-        mainWindow.Show();
+            shell.Loaded += (_, _) => shell.OpenSystemTools();
+        shell.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -144,10 +150,22 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IScanner, HibernationScanner>();
 
         services.AddSingleton<ISystemTweak, HibernationTweak>();
-        services.AddSingleton<IStartupManager, WindowsStartupManager>();
         services.AddSingleton<RestorePointCreator>();
 
-        services.AddSingleton<MainWindow>();
+        // Optimizer services. Startup uses Task Manager's StartupApproved flags (never deletes entries)
+        services.AddSingleton<IStartupManager, WindowsStartupManager>();
+        services.AddSingleton<IResourceMonitor, ResourceMonitor>();
+        services.AddSingleton<ISystemScanner, SystemScanner>();
+        services.AddSingleton<IHealthScoreService, HealthScoreService>();
+        services.AddSingleton<IScanHistoryStore, JsonScanHistoryStore>();
+
+        // ViewModels
+        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<ResourceViewModel>();
+
+        // Secondary windows are transient: a closed WPF window can't be shown again
+        services.AddTransient<MainWindow>();
         services.AddTransient<SystemToolsWindow>();
+        services.AddSingleton<ShellWindow>();
     }
 }

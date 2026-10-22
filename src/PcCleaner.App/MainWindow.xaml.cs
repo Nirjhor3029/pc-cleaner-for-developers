@@ -116,7 +116,7 @@ public partial class MainWindow : Window
         {
             if (AdminHelper.Elevate(App.AutoScanArgument))
             {
-                Close();
+                System.Windows.Application.Current.Shutdown(); // the elevated instance takes over
                 return;
             }
             elevationDeclined = true;
@@ -252,9 +252,9 @@ public partial class MainWindow : Window
 
             if (elevate == MessageBoxResult.Yes)
             {
-                if (AdminHelper.Elevate())
+                if (AdminHelper.Elevate(App.AutoScanArgument))
                 {
-                    Close();
+                    System.Windows.Application.Current.Shutdown();
                     return;
                 }
                 MessageBox.Show("Elevation was cancelled. No files were cleaned.",

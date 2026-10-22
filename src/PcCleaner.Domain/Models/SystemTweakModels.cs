@@ -27,22 +27,3 @@ public enum StartupLocation
     UserStartupFolder,
     CommonStartupFolder
 }
-
-/// <summary>A program that starts automatically at sign-in.</summary>
-public class StartupEntry
-{
-    /// <summary>Registry value name or startup-folder file name.</summary>
-    public string Name { get; set; } = string.Empty;
-    public string Command { get; set; } = string.Empty;
-    public string? ExecutablePath { get; set; }
-    public string? Publisher { get; set; }
-
-    /// <summary>Friendly program name from the executable (e.g. "Google Chrome"), if it has one.</summary>
-    public string? Description { get; set; }
-
-    public StartupLocation Location { get; set; }
-    public bool IsEnabled { get; set; }
-
-    /// <summary>Machine-wide entries can only be toggled as administrator.</summary>
-    public bool RequiresAdmin { get; set; }
-}

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Win32;
+using PcCleaner.Domain.Enums;
 using PcCleaner.Domain.Interfaces;
 using PcCleaner.Domain.Models;
 
@@ -8,7 +9,7 @@ namespace PcCleaner.Infrastructure.SystemTools;
 /// <summary>A place Windows starts programs from at sign-in, plus its StartupApproved key.</summary>
 /// <param name="RunKeyPath">Registry Run key (null for a startup folder source).</param>
 /// <param name="FolderPath">Startup folder (null for a registry source).</param>
-public sealed record StartupSource(
+public sealed record StartupRegistration(
     StartupLocation Location,
     RegistryKey Root,
     string? RunKeyPath,
@@ -28,29 +29,29 @@ public class WindowsStartupManager : IStartupManager
     private const string Run32Key = @"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
     private const string ApprovedBase = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\";
 
-    private readonly IReadOnlyList<StartupSource> _sources;
+    private readonly IReadOnlyList<StartupRegistration> _sources;
 
     public WindowsStartupManager() : this(DefaultSources())
     {
     }
 
-    internal WindowsStartupManager(IReadOnlyList<StartupSource> sources)
+    internal WindowsStartupManager(IReadOnlyList<StartupRegistration> sources)
     {
         _sources = sources;
     }
 
-    private static IReadOnlyList<StartupSource> DefaultSources() => new[]
+    private static IReadOnlyList<StartupRegistration> DefaultSources() => new[]
     {
-        new StartupSource(StartupLocation.UserRegistry, Registry.CurrentUser, RunKey, null, ApprovedBase + "Run", false),
-        new StartupSource(StartupLocation.MachineRegistry, Registry.LocalMachine, RunKey, null, ApprovedBase + "Run", true),
-        new StartupSource(StartupLocation.MachineRegistry32, Registry.LocalMachine, Run32Key, null, ApprovedBase + "Run32", true),
-        new StartupSource(StartupLocation.UserStartupFolder, Registry.CurrentUser, null,
+        new StartupRegistration(StartupLocation.UserRegistry, Registry.CurrentUser, RunKey, null, ApprovedBase + "Run", false),
+        new StartupRegistration(StartupLocation.MachineRegistry, Registry.LocalMachine, RunKey, null, ApprovedBase + "Run", true),
+        new StartupRegistration(StartupLocation.MachineRegistry32, Registry.LocalMachine, Run32Key, null, ApprovedBase + "Run32", true),
+        new StartupRegistration(StartupLocation.UserStartupFolder, Registry.CurrentUser, null,
             Environment.GetFolderPath(Environment.SpecialFolder.Startup), ApprovedBase + "StartupFolder", false),
-        new StartupSource(StartupLocation.CommonStartupFolder, Registry.LocalMachine, null,
+        new StartupRegistration(StartupLocation.CommonStartupFolder, Registry.LocalMachine, null,
             Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), ApprovedBase + "StartupFolder", true),
     };
 
-    public Task<List<StartupEntry>> GetEntriesAsync()
+    public Task<List<StartupEntry>> GetAsync()
     {
         return Task.Run(() =>
         {
@@ -66,17 +67,33 @@ public class WindowsStartupManager : IStartupManager
                     // source unreadable - skip it
                 }
             }
-            return entries.OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
+            return entries.OrderBy(e => DisplayName(e), StringComparer.OrdinalIgnoreCase).ToList();
         });
     }
 
-    public void SetEnabled(StartupEntry entry, bool enabled)
+    public Task<bool> DisableAsync(string id) => SetStatusAsync(id, enabled: false);
+
+    public Task<bool> EnableAsync(string id) => SetStatusAsync(id, enabled: true);
+
+    public async Task<string> GetFileLocationAsync(string id)
     {
-        var source = _sources.First(s => s.Location == entry.Location);
+        var entry = (await GetAsync()).FirstOrDefault(e => e.Id == id);
+        return entry?.FilePath ?? string.Empty;
+    }
+
+    private async Task<bool> SetStatusAsync(string id, bool enabled)
+    {
+        var entry = (await GetAsync()).FirstOrDefault(e => e.Id == id);
+        if (entry == null || (!enabled && !entry.IsSafeToDisable))
+            return false;
+
+        var source = _sources.First(s => s.Location == entry.Registration);
         using var key = source.Root.CreateSubKey(source.ApprovedKeyPath, writable: true);
         key.SetValue(entry.Name, ApprovedValue(enabled, DateTime.UtcNow), RegistryValueKind.Binary);
-        entry.IsEnabled = enabled;
+        return true;
     }
+
+    private static string DisplayName(StartupEntry e) => string.IsNullOrEmpty(e.Description) ? e.Name : e.Description;
 
     internal static byte[] ApprovedValue(bool enabled, DateTime utcNow)
     {
@@ -91,7 +108,7 @@ public class WindowsStartupManager : IStartupManager
     internal static bool IsApproved(object? value) =>
         value is not byte[] bytes || bytes.Length == 0 || (bytes[0] & 1) == 0;
 
-    private static IEnumerable<StartupEntry> ReadRunKey(StartupSource source)
+    private static IEnumerable<StartupEntry> ReadRunKey(StartupRegistration source)
     {
         using var run = source.Root.OpenSubKey(source.RunKeyPath!);
         if (run == null)
@@ -101,22 +118,14 @@ public class WindowsStartupManager : IStartupManager
         foreach (var name in run.GetValueNames().Where(n => !string.IsNullOrEmpty(n)))
         {
             var command = run.GetValue(name)?.ToString() ?? string.Empty;
-            var exe = ExtractExecutable(command);
-            yield return new StartupEntry
-            {
-                Name = name,
-                Command = command,
-                ExecutablePath = exe,
-                Publisher = PublisherOf(exe),
-                Description = DescriptionOf(exe),
-                Location = source.Location,
-                IsEnabled = IsApproved(approved?.GetValue(name)),
-                RequiresAdmin = source.RequiresAdmin
-            };
+            if (string.IsNullOrWhiteSpace(command))
+                continue;
+            yield return CreateEntry(source, name, command, ExtractExecutable(command),
+                $@"{source.Root.Name}\{source.RunKeyPath}", IsApproved(approved?.GetValue(name)));
         }
     }
 
-    private static IEnumerable<StartupEntry> ReadFolder(StartupSource source)
+    private static IEnumerable<StartupEntry> ReadFolder(StartupRegistration source)
     {
         if (string.IsNullOrEmpty(source.FolderPath) || !Directory.Exists(source.FolderPath))
             yield break;
@@ -127,19 +136,52 @@ public class WindowsStartupManager : IStartupManager
             var name = Path.GetFileName(file);
             if (name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase))
                 continue;
-
-            yield return new StartupEntry
-            {
-                Name = name,
-                Command = file,
-                ExecutablePath = file,
-                Publisher = PublisherOf(file),
-                Description = DescriptionOf(file),
-                Location = source.Location,
-                IsEnabled = IsApproved(approved?.GetValue(name)),
-                RequiresAdmin = source.RequiresAdmin
-            };
+            yield return CreateEntry(source, name, file, file, source.FolderPath, IsApproved(approved?.GetValue(name)));
         }
+    }
+
+    private static StartupEntry CreateEntry(StartupRegistration source, string name, string command, string? exe,
+        string location, bool enabled)
+    {
+        var isFolder = source.FolderPath != null;
+        return new StartupEntry
+        {
+            Id = $"{source.Location}|{name}",
+            Name = name,
+            Command = command,
+            FilePath = exe ?? string.Empty,
+            Publisher = PublisherOf(exe) ?? string.Empty,
+            Description = DescriptionOf(exe) ?? string.Empty,
+            Source = isFolder
+                ? (source.Location == StartupLocation.CommonStartupFolder ? StartupSource.StartupFolderCommon : StartupSource.StartupFolder)
+                : StartupSource.RegistryRun,
+            Registration = source.Location,
+            Location = location,
+            Status = enabled ? StartupStatus.Enabled : StartupStatus.Disabled,
+            Impact = EstimateImpact(name, exe),
+            IsSafeToDisable = !IsCritical(name, exe),
+            RequiresAdmin = source.RequiresAdmin
+        };
+    }
+
+    // Rough guess until real boot-time measurement exists: chat/sync/browser helpers load heavy runtimes
+    private static readonly string[] HighImpact = { "discord", "spotify", "teams", "onedrive", "adobe", "chrome", "slack", "docker", "steam", "zoom" };
+    private static readonly string[] LowImpact = { "securityhealth", "windows defender", "rtkaud", "realtek" };
+    private static readonly string[] Critical = { "securityhealth", "windows defender", "windows security" };
+
+    internal static StartupImpact EstimateImpact(string name, string? exe)
+    {
+        var text = (name + " " + exe).ToLowerInvariant();
+        if (LowImpact.Any(text.Contains))
+            return StartupImpact.Low;
+        return HighImpact.Any(text.Contains) ? StartupImpact.High : StartupImpact.Medium;
+    }
+
+    /// <summary>Security software keeps starting; the UI won't offer to turn it off.</summary>
+    internal static bool IsCritical(string name, string? exe)
+    {
+        var text = (name + " " + exe).ToLowerInvariant();
+        return Critical.Any(text.Contains);
     }
 
     /// <summary>Gets the program path out of a Run command such as <c>"C:\x\app.exe" --min</c> or <c>C:\x\app.exe /s</c>.</summary>

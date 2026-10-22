@@ -1,0 +1,44 @@
+PC Cleaner — WhatsApp Install Guide (Windows 10/11 x64)
+==================================================
+File: PC-Cleaner-Setup.exe (48.82 MB, self-contained — no .NET needed)
+If Defender/SmartScreen blocks: follow steps below (2 clicks extra, not a virus).
+
+STEP 1 — DOWNLOAD FROM WHATSAPP
+--------------------------------
+- WhatsApp Desktop/Web: Click download arrow on PC-Cleaner-Setup.zip / .exe
+- If browser says "PC-Cleaner-Setup.exe was blocked":
+    Edge/Chrome: Click "..." next to file -> Keep -> Keep anyway
+    (ZIP file will NOT be blocked, that's why ZIP is recommended)
+
+STEP 2 — UNBLOCK (if needed)
+-----------------------------
+- Right-click PC-Cleaner-Setup.exe -> Properties -> Check [x] Unblock -> Apply -> OK
+- Or PowerShell: Right-click Start -> Terminal -> run:
+    Unblock-File -Path ".\PC-Cleaner-Setup.exe"
+
+STEP 3 — INSTALL
+----------------
+- Double-click PC-Cleaner-Setup.exe -> Yes (UAC admin prompt is normal)
+- If "Windows protected your PC" (SmartScreen, unknown publisher):
+    Click "More info" -> "Run anyway"
+- Installer: Next -> Next -> [x] Create desktop icon (optional) -> Install -> Finish (Launch PC Cleaner checked)
+
+STEP 4 — USE
+------------
+- SCAN -> 9.86 GB grouped categories -> uncheck to keep -> CLEAN -> Done
+- DISK ANALYZER -> drill down C:\
+- Logs: %LOCALAPPDATA%\PC-Cleaner\logs\
+
+STEP 5 — IF DEFENDER QUARANTINES (rare for unsigned cleaner apps)
+-----------------------------------------------------------------
+- Windows Security -> Virus & threat protection -> Protection history
+- Find PC-Cleaner-Setup.exe -> Allow on device -> Restore -> Run again
+- Submit false positive (once, for all users):
+    https://www.microsoft.com/wdsi/filesubmission
+    -> Software developer -> I believe file is incorrectly detected -> Upload exe
+
+Why warning? Unsigned + requests admin (to clean Windows Temp/Update) + deletes temp files = heuristic "PUA:Win32/Cleaner". No network, no data theft.
+Verified safe: Open source at https://github.com/Nirjhor3029/pc-cleaner-for-developers
+Publisher: PcCleaner, Version 1.0.0, Self-contained .NET 8 WPF
+
+Need help? Open issue: https://github.com/Nirjhor3029/pc-cleaner-for-developers/issues

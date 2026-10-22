@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog" Version="4.0.1" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

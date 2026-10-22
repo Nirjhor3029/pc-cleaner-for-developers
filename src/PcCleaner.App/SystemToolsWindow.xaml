@@ -169,8 +169,22 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Base}" FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Base}" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+                                                    <Border Style="{StaticResource Pill}" Background="{StaticResource WarningSoftBrush}" Padding="7,1"
+                                                            Margin="8,0,0,0" ToolTip="Estimated from the app type. Apps like this usually slow down sign-in.">
+                                                        <Border.Visibility>
+                                                            <Binding Path="IsHighImpact">
+                                                                <Binding.Converter>
+                                                                    <BooleanToVisibilityConverter/>
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </Border.Visibility>
+                                                        <TextBlock Text="{Binding ImpactText}" Style="{StaticResource Text.Caption}" FontSize="10.5"
+                                                                   Foreground="{StaticResource WarningBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
                                                 <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0">
                                                     <Run Text="{Binding Publisher, Mode=OneWay}"/><Run Text=", "/><Run Text="{Binding LocationText, Mode=OneWay}"/>
                                                 </TextBlock>

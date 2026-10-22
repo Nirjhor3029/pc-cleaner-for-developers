@@ -9,7 +9,8 @@ namespace PcCleaner.Domain.Interfaces;
 /// </summary>
 public interface IStartupManager
 {
-    Task<List<StartupEntry>> GetEntriesAsync();
-
-    void SetEnabled(StartupEntry entry, bool enabled);
+    Task<List<StartupEntry>> GetAsync();
+    Task<bool> DisableAsync(string id);
+    Task<bool> EnableAsync(string id);
+    Task<string> GetFileLocationAsync(string id);
 }

@@ -1,0 +1,46 @@
+<Window x:Class="PcCleaner.App.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PC Cleaner" Height="720" Width="1080"
+        MinWidth="900" MinHeight="600" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBrush}" FontFamily="{StaticResource UiFont}" UseLayoutRounding="True">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="232"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="16,22,16,18">
+                <StackPanel DockPanel.Dock="Top" Margin="6,0,6,22">
+                    <TextBlock Text="PC Cleaner" Style="{StaticResource Text.Title}"/>
+                    <TextBlock x:Name="HealthBadge" Text="Checking health" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <TextBlock DockPanel.Dock="Bottom" Text="v1.0" Style="{StaticResource Text.Caption}"
+                           Foreground="{StaticResource FgSubtleBrush}" Margin="6,0"/>
+
+                <StackPanel>
+                    <TextBlock Text="Overview" Style="{StaticResource Text.Caption}" Foreground="{StaticResource FgSubtleBrush}" Margin="12,0,0,6"/>
+                    <RadioButton x:Name="NavDashboard" Content="Dashboard" Tag="&#xE80F;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavResource" Content="Resources" Tag="&#xE9D9;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavHistory" Content="History" Tag="&#xE81C;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"/>
+
+                    <TextBlock Text="Tools" Style="{StaticResource Text.Caption}" Foreground="{StaticResource FgSubtleBrush}" Margin="12,18,0,6"/>
+                    <RadioButton x:Name="NavCleaner" Content="Cleaner" Tag="&#xE74D;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"
+                                 ToolTip="Scan and remove junk, caches and Windows leftovers"/>
+                    <RadioButton x:Name="NavStartup" Content="Startup apps" Tag="&#xE945;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"
+                                 ToolTip="Choose which apps open when you sign in"/>
+                    <RadioButton x:Name="NavAnalyzer" Content="Disk analyzer" Tag="&#xEDA2;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"
+                                 ToolTip="Find the largest folders on any drive"/>
+                    <RadioButton x:Name="NavTools" Content="System tools" Tag="&#xE713;" Style="{StaticResource NavItem}" GroupName="shell" Checked="Nav_Checked"
+                                 ToolTip="Hibernation and other Windows settings"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Content -->
+        <ContentControl x:Name="MainContent" Grid.Column="1"/>
+    </Grid>
+</Window>

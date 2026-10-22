@@ -1,0 +1,47 @@
+name: Sign with SignPath
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-sign:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore & Publish (self-contained)
+        run: dotnet publish src/PcCleaner.App -c Release -r win-x64 --self-contained true -o src/PcCleaner.App/bin/Release/net8.0-windows/publish
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build unsigned installer
+        run: ISCC.exe installer/pc-cleaner.iss
+
+      - name: Sign with SignPath
+        uses: signpath/github-action@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: REPLACE_WITH_YOUR_ORG_ID
+          project-slug: pc-cleaner
+          signing-policy-slug: elease-signing
+          github-artifact-id: PC-Cleaner-Setup
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Upload signed artifact to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: signed/PC-Cleaner-Setup.exe
+          generate_release_notes: true

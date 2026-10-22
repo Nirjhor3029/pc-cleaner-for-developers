@@ -1,0 +1,623 @@
+অবশ্যই। আমরা যে Windows PC Cleaner + Performance Optimizer নিয়ে আলোচনা করলাম, সেটার জন্য একটা বাস্তবসম্মত PRD বানাচ্ছি—যাতে পরে সরাসরি development plan, architecture এবং feature breakdown করা যায়।
+
+PRD — Windows PC Cleaner & Performance Optimizer
+
+Product Type: Windows Desktop Application
+Version: MVP v1.0
+Target User: সাধারণ Windows user + developer/power user
+Primary Goal: PC-এর unnecessary resource usage কমানো, junk পরিষ্কার করা এবং PC slow হওয়ার কারণ identify করে safe optimization করা।
+
+1. Product Vision
+
+একটি lightweight Windows application তৈরি করা হবে যা user-এর PC:
+
+Clean করবে
+Diagnose করবে
+Performance bottleneck identify করবে
+Startup applications manage করবে
+Resource-heavy processes identify করবে
+Safe optimization recommendations দেবে
+
+মূল philosophy:
+
+“Don't blindly boost the PC. Find what's slowing it down and fix the actual problem.”
+
+2. Core Modules
+
+Application-এর প্রথম version-এ ৫টি প্রধান module থাকবে:
+
+┌──────────────────────────────┐
+│       PC OPTIMIZER           │
+├──────────────────────────────┤
+│                              │
+│  🧹 Cleaner                   │
+│  🚀 Startup Manager          │
+│  🧠 Resource Monitor         │
+│  ⚡ Performance Optimizer     │
+│  🔍 PC Health / Diagnostics  │
+│                              │
+└──────────────────────────────┘
+3. Dashboard
+
+Application open করলে প্রথমে Dashboard।
+
+Dashboard
+
+দেখাবে:
+
+PC PERFORMANCE
+
+Overall Score
+       82
+     / 100
+
+CPU          34%   🟢
+RAM          68%   🟢
+Disk         12%   🟢
+Startup      61%   🟡
+Storage      87%   🟢
+
+তার নিচে:
+
+Recommended Actions
+
+⚠ 5 startup apps are slowing boot
+⚠ 3.4 GB temporary files can be removed
+⚠ Chrome is using 2.8 GB RAM
+
+[ Fix Recommended Issues ]
+Dashboard requirements
+Real-time CPU usage
+RAM usage
+Disk usage
+Storage availability
+Overall health score
+Number of recommended actions
+Last scan time
+4. Cleaner Module
+
+এটাই existing cleaner-এর expanded version।
+
+Scan Categories
+Windows
+%TEMP%
+Windows Temp
+Prefetch — optional / conservative
+Thumbnail cache
+Windows error reports
+Crash dumps
+Delivery Optimization cache
+Windows Update leftovers where safely removable
+Recycle Bin
+Browser
+
+Support initially:
+
+Chrome
+Edge
+Firefox
+
+Detect:
+
+Cache
+Cookies — default OFF
+History — default OFF
+Download history — default OFF
+
+কারণ user যেন accidentally login/session হারিয়ে না ফেলে।
+
+Developer Cache
+
+Developer-focused feature:
+
+npm cache
+Yarn cache
+pnpm cache
+Composer cache
+Gradle cache — optional
+NuGet cache — optional
+pip cache — optional
+Scan result
+Cleaner Scan Complete
+
+Windows Cache        1.8 GB
+Browser Cache        2.1 GB
+Developer Cache      4.7 GB
+Recycle Bin          800 MB
+Other                600 MB
+────────────────────────
+Total                10.0 GB
+
+[ Review ] [ Clean ]
+Safety
+
+প্রতিটি category-এর পাশে:
+
+☑ Safe to remove
+☐ User data
+⚠ Advanced
+5. Startup Manager
+
+PC boot হওয়ার সময় কোন application automatically চালু হচ্ছে সেটা detect করবে।
+
+Information
+
+প্রতিটি startup item:
+
+Application     Impact      Status
+
+Discord         High        Enabled
+Spotify         Medium      Enabled
+Teams           High        Enabled
+OneDrive        Low         Enabled
+Adobe Updater   Medium      Enabled
+Actions
+[ Disable ]
+[ Enable ]
+[ Open Location ]
+[ Search Information ]
+Startup sources
+
+Application ideally detect করবে:
+
+Registry Run
+Registry RunOnce
+Startup folders
+Scheduled tasks
+Common startup locations
+Important
+
+Application কোন startup item delete করবে না।
+
+প্রথম version-এ:
+
+Disable / Enable
+
+দেওয়া হবে।
+
+6. Resource Monitor
+
+এখানে user বুঝতে পারবে PC বর্তমানে কী কারণে slow হচ্ছে।
+
+CPU
+CPU Usage: 42%
+
+Process              CPU
+
+chrome.exe           18%
+node.exe              9%
+phpstorm.exe          7%
+system                 5%
+Memory
+RAM: 10.8 / 16 GB
+
+Process              Memory
+
+chrome.exe           3.2 GB
+phpstorm.exe         2.1 GB
+node.exe             1.4 GB
+docker.exe            900 MB
+Disk
+Disk Usage: 92%
+
+Process              Disk
+
+MsMpEng.exe           31 MB/s
+chrome.exe             8 MB/s
+node.exe               5 MB/s
+Process actions
+
+User চাইলে:
+
+[ End Task ]
+[ Open File Location ]
+[ View Details ]
+
+Critical Windows processes-এর জন্য End Task disable থাকবে।
+
+7. Performance Diagnostics
+
+এটাই application-এর সবচেয়ে গুরুত্বপূর্ণ feature।
+
+User যখন বলবে:
+
+PC slow
+
+তখন application scan করবে।
+
+Diagnostic checks
+CPU
+Current CPU usage
+CPU model
+Core/thread count
+Sustained high CPU
+CPU throttling indicators where available
+RAM
+Total RAM
+Used RAM
+Available RAM
+Memory pressure
+Top memory consumers
+Disk
+Disk usage
+Free space
+Disk type: HDD / SSD / NVMe
+High disk activity
+Basic SMART/health information where safely accessible
+Startup
+Number of startup applications
+High-impact startup apps
+Storage
+C:\
+Used: 410 GB
+Free: 90 GB
+
+Low free space হলে warning।
+
+Background processes
+
+Detect unusually high resource consumers.
+
+8. Performance Score
+
+একটি score system থাকবে।
+
+Example:
+
+PC Health Score
+
+82 / 100
+
+Possible components:
+
+Storage Health       20%
+Startup              20%
+Memory               20%
+CPU                   15%
+Disk                  15%
+Background Load       10%
+
+তবে score যেন arbitrary না হয়।
+
+প্রতিটি score-এর explanation থাকবে।
+
+Example:
+
+Startup Score: 52/100
+
+Reason:
+7 applications start automatically.
+3 have high startup impact.
+
+Recommended:
+Disable unnecessary startup applications.
+9. One-Click Optimization
+
+Dashboard-এ:
+
+“Optimize Now”
+
+button থাকবে।
+
+কিন্তু এটি blindly সবকিছু change করবে না।
+
+Example
+5 Safe Optimizations Found
+
+☑ Clean temporary files       3.2 GB
+☑ Clean npm cache             1.8 GB
+☑ Disable unused startup      2 apps
+☐ Clear browser cache         1.4 GB
+
+[ Optimize Selected ]
+
+User review করে তারপর action নেবে।
+
+10. Safe Mode Philosophy
+
+Application-এর তিন ধরনের operation থাকবে।
+
+🟢 Safe
+
+Automatically recommend করা যাবে।
+
+Example:
+
+Temp files
+Recycle Bin
+Known cache
+Safe logs
+🟡 Caution
+
+User confirmation প্রয়োজন।
+
+Example:
+
+Browser cache
+Startup disable
+Developer caches
+🔴 Advanced
+
+MVP-তে avoid করা হবে।
+
+Example:
+
+Registry cleaning
+Random service disabling
+Windows component removal
+Pagefile modification
+Registry optimization
+“RAM boost”
+Aggressive process killing
+11. Smart Recommendations
+
+Application শুধু বলবে না:
+
+“PC slow.”
+
+বরং কারণ দেখাবে।
+
+Example:
+
+⚠ Your PC may feel slow because:
+
+1. RAM usage is 91%
+2. Chrome is using 4.1 GB
+3. 8 startup applications are enabled
+4. C: drive has only 6% free space
+
+Recommended:
+
+✓ Close unnecessary applications
+✓ Disable 3 startup apps
+✓ Free up storage
+
+এটাই product-এর major differentiator হতে পারে।
+
+12. Scan History
+
+User আগের scan দেখতে পারবে।
+
+Scan History
+
+Sep 7
+Score: 72 → 84
+Freed: 8.4 GB
+
+Sep 1
+Score: 68 → 76
+Freed: 4.2 GB
+
+Performance improvement track করা যাবে।
+
+13. Before / After
+
+Optimization করার আগে:
+
+Before
+
+RAM Usage      89%
+Disk Usage     94%
+Startup Apps   11
+Free Space     12 GB
+Score          63
+
+পরে:
+
+After
+
+RAM Usage      71%
+Disk Usage     42%
+Startup Apps    7
+Free Space     20 GB
+Score          81
+
+Note: Score improvement যেন actual measured changes-এর ভিত্তিতে হয়; fake performance claims নয়।
+
+14. Notifications
+
+Optional notifications:
+
+⚠ Your C: drive is almost full.
+
+Only 8 GB remaining.
+
+[ Scan & Clean ]
+
+অথবা:
+
+⚠ High memory usage detected.
+
+RAM usage has remained above 90%.
+
+[ View Processes ]
+15. Settings
+General
+Start with Windows
+Minimize to tray
+Notifications
+Dark/Light theme
+Cleaner
+Auto clean schedule
+Cache categories
+Confirmation before deletion
+Performance
+Monitoring interval
+Resource alerts
+Privacy
+No personal files uploaded
+No browsing data collected
+No telemetry by default / clearly disclosed
+16. Security Requirements
+
+এটা অত্যন্ত গুরুত্বপূর্ণ।
+
+Application elevated permission চাইতে পারে, কিন্তু:
+
+Must NOT
+Delete arbitrary files
+Modify system files unnecessarily
+Disable security software
+Disable Windows Defender
+Kill security processes
+Modify registry blindly
+Execute downloaded scripts
+Upload user files
+Must
+Validate file paths
+Use allowlists for cleaning locations
+Require confirmation for risky operations
+Log actions
+Provide restore/undo where feasible
+17. Technical Architecture
+
+যেহেতু তুমি developer, আমি architecture-টা modular রাখার পরামর্শ দেব।
+
+PC Optimizer
+│
+├── UI
+│
+├── System Scanner
+│   ├── CPU
+│   ├── RAM
+│   ├── Disk
+│   ├── Storage
+│   └── Processes
+│
+├── Cleaner Engine
+│   ├── Windows Cleaner
+│   ├── Browser Cleaner
+│   └── Dev Cache Cleaner
+│
+├── Startup Manager
+│
+├── Diagnostics Engine
+│
+├── Optimization Engine
+│
+├── Health Score Engine
+│
+└── Logging / Audit
+
+আর সবচেয়ে important design principle:
+
+Scanner
+   ↓
+Analysis
+   ↓
+Recommendation
+   ↓
+User Approval
+   ↓
+Action
+   ↓
+Verification
+
+অর্থাৎ সরাসরি:
+
+Scan → Delete Everything
+
+না।
+
+18. MVP Scope
+
+প্রথম version-এ আমি এগুলো রাখব:
+
+Must Have
+ Dashboard
+ CPU monitoring
+ RAM monitoring
+ Disk monitoring
+ Storage monitoring
+ Process list
+ Temp cleaner
+ Windows cache cleaner
+ Browser cache cleaner
+ npm cache cleaner
+ Composer cache cleaner
+ Startup manager
+ Performance diagnostic
+ Health score
+ Recommendations
+ One-click safe optimization
+ Scan history
+ Action logs
+Later
+ SSD health
+ SMART monitoring
+ Duplicate file finder
+ Large file finder
+ Scheduled cleaning
+ Advanced diagnostics
+ Portable mode
+ System tray monitor
+ Automatic optimization
+19. Non-Goals
+
+MVP-তে আমরা করব না:
+
+“Boost RAM” marketing
+Registry cleaner
+Registry defragmenter
+Fake FPS booster
+Automatic Windows service disabling
+Automatic driver installation
+Automatic BIOS modification
+Antivirus replacement
+Aggressive process killing
+20. Success Metrics
+
+Product successful হলে:
+
+Cleaner
+Average junk removed per scan
+Performance
+Number of performance issues detected
+Optimization
+Recommended actions → successfully completed
+User value
+Before score → After score
+Stability
+
+সবচেয়ে গুরুত্বপূর্ণ:
+
+Optimization করার পরে Windows/app stability খারাপ হওয়া যাবে না।
+
+21. Product Positioning
+
+আমি এটাকে শুধু PC Cleaner হিসেবে position করতাম না।
+
+বরং:
+
+Windows Performance & Health Manager
+
+কারণ cleaner market অনেক crowded।
+
+আমাদের core differentiator হবে:
+
+Detect → Explain → Recommend → Fix → Verify
+
+উদাহরণ:
+
+Your PC is slow.
+
+Why?
+↓
+RAM pressure + startup overload
+
+What should you do?
+↓
+Disable 3 startup apps
+Close Chrome background processes
+
+Fix
+↓
+[ Optimize ]
+
+Result
+↓
+RAM: 89% → 67%
+Startup items: 11 → 8
+Health: 64 → 82
+
+এটা হলে applicationটা শুধু “আরেকটা cleaner” হবে না; একটা genuine Windows performance diagnostic tool হবে।

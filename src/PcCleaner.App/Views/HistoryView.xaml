@@ -1,0 +1,14 @@
+<UserControl x:Class="PcCleaner.App.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="20" Background="#0f0f1e">
+        <StackPanel>
+            <TextBlock Text="📈 Scan History" Foreground="White" FontSize="18" FontWeight="Bold"/>
+            <TextBlock Text="Before → After scores stored in %LOCALAPPDATA%\PC-Cleaner\history.json (last 50)." Foreground="#94a3b8" FontSize="11" Margin="0,4,0,12"/>
+            <Border Style="{StaticResource CardBorderStyle}">
+                <TextBlock Text="No history yet — run Optimize and verification will log here." Foreground="#666" FontSize="12"/>
+            </Border>
+            <TextBlock Text="Example: Sep 7  Score 72 → 84  Freed 8.4 GB" Foreground="#555" FontSize="11" Margin="0,8,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

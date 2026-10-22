@@ -1,28 +1,11 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
+using PcCleaner.Domain.Enums;
 using PcCleaner.Domain.Interfaces;
 using PcCleaner.Domain.Models;
 
 namespace PcCleaner.App;
-
-public abstract class ObservableObject : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value))
-            return false;
-        field = value;
-        OnPropertyChanged(name);
-        return true;
-    }
-
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
 
 /// <summary>One System Tools card (e.g. Hibernation) with its options.</summary>
 public class TweakViewModel : ObservableObject
@@ -48,20 +31,20 @@ public class TweakViewModel : ObservableObject
     public string GroupName => "tweak-" + Tweak.Id;
     public ObservableCollection<TweakOptionViewModel> Options { get; }
 
-    public string StatusText { get => _statusText; private set => Set(ref _statusText, value); }
-    public string Details { get => _details; private set => Set(ref _details, value); }
+    public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
+    public string Details { get => _details; private set => SetProperty(ref _details, value); }
 
     public string Message
     {
         get => _message;
         set
         {
-            Set(ref _message, value);
+            SetProperty(ref _message, value);
             OnPropertyChanged(nameof(MessageVisibility));
         }
     }
 
-    public bool MessageIsError { get => _messageIsError; set => Set(ref _messageIsError, value); }
+    public bool MessageIsError { get => _messageIsError; set => SetProperty(ref _messageIsError, value); }
     public Visibility MessageVisibility => string.IsNullOrEmpty(Message) ? Visibility.Collapsed : Visibility.Visible;
 
     public bool IsBusy
@@ -69,7 +52,7 @@ public class TweakViewModel : ObservableObject
         get => _isBusy;
         set
         {
-            Set(ref _isBusy, value);
+            SetProperty(ref _isBusy, value);
             OnPropertyChanged(nameof(CanApply));
         }
     }
@@ -122,7 +105,7 @@ public class TweakOptionViewModel : ObservableObject
         get => _isSelected;
         set
         {
-            if (Set(ref _isSelected, value))
+            if (SetProperty(ref _isSelected, value))
                 _owner.SelectionChanged();
         }
     }
@@ -132,14 +115,14 @@ public class TweakOptionViewModel : ObservableObject
         get => _isCurrent;
         set
         {
-            Set(ref _isCurrent, value);
+            SetProperty(ref _isCurrent, value);
             OnPropertyChanged(nameof(CurrentVisibility));
         }
     }
 
     public Visibility CurrentVisibility => IsCurrent ? Visibility.Visible : Visibility.Collapsed;
 
-    public string Hint { get => _hint; set => Set(ref _hint, value); }
+    public string Hint { get => _hint; set => SetProperty(ref _hint, value); }
 }
 
 public class StartupEntryViewModel : ObservableObject
@@ -149,8 +132,9 @@ public class StartupEntryViewModel : ObservableObject
     public StartupEntryViewModel(StartupEntry entry, bool isAdmin)
     {
         Entry = entry;
-        _isEnabled = entry.IsEnabled;
-        CanToggle = !entry.RequiresAdmin || isAdmin;
+        _isEnabled = entry.Status == StartupStatus.Enabled;
+        NeedsAdmin = entry.RequiresAdmin && !isAdmin;
+        CanToggle = !NeedsAdmin && (entry.IsSafeToDisable || !_isEnabled);
     }
 
     public StartupEntry Entry { get; }
@@ -160,7 +144,17 @@ public class StartupEntryViewModel : ObservableObject
         : Entry.Name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? Entry.Name[..^4] : Entry.Name;
     public string Publisher => string.IsNullOrEmpty(Entry.Publisher) ? "Unknown publisher" : Entry.Publisher;
 
-    public string LocationText => Entry.Location switch
+    public string ImpactText => Entry.Impact switch
+    {
+        StartupImpact.High => "High startup impact",
+        StartupImpact.Low => "Low startup impact",
+        StartupImpact.Medium => "Medium startup impact",
+        _ => string.Empty
+    };
+
+    public bool IsHighImpact => Entry.Impact == StartupImpact.High;
+
+    public string LocationText => Entry.Registration switch
     {
         StartupLocation.UserRegistry => "Registry, this user",
         StartupLocation.MachineRegistry => "Registry, all users",
@@ -171,17 +165,20 @@ public class StartupEntryViewModel : ObservableObject
 
     public string Command => Entry.Command;
     public bool CanToggle { get; }
+    private bool NeedsAdmin { get; }
 
-    public string ToggleToolTip => CanToggle
-        ? (IsEnabled ? "Starts when you sign in. Click to stop it starting automatically." : "Doesn't start automatically. Click to turn back on.")
-        : "Starts for all users. Restart PC Cleaner as administrator to change this.";
+    public string ToggleToolTip => NeedsAdmin
+        ? "Starts for all users. Restart PC Cleaner as administrator to change this."
+        : !CanToggle
+            ? "Security software. PC Cleaner keeps it starting with Windows."
+            : IsEnabled ? "Starts when you sign in. Click to stop it starting automatically." : "Doesn't start automatically. Click to turn back on.";
 
     public bool IsEnabled
     {
         get => _isEnabled;
         set
         {
-            if (Set(ref _isEnabled, value))
+            if (SetProperty(ref _isEnabled, value))
                 OnPropertyChanged(nameof(ToggleToolTip));
         }
     }

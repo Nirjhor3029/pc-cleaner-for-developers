@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using PcCleaner.Domain.Enums;
 using PcCleaner.Domain.Models;
 using PcCleaner.Infrastructure.Commands;
 using PcCleaner.Infrastructure.SystemTools;
@@ -85,8 +86,8 @@ public class WindowsStartupManagerTests : IDisposable
         Directory.CreateDirectory(_folder);
         _manager = new WindowsStartupManager(new[]
         {
-            new StartupSource(StartupLocation.UserRegistry, Registry.CurrentUser, _keyRoot + @"\Run", null, _keyRoot + @"\Approved\Run", false),
-            new StartupSource(StartupLocation.UserStartupFolder, Registry.CurrentUser, null, _folder, _keyRoot + @"\Approved\StartupFolder", false),
+            new StartupRegistration(StartupLocation.UserRegistry, Registry.CurrentUser, _keyRoot + @"\Run", null, _keyRoot + @"\Approved\Run", false),
+            new StartupRegistration(StartupLocation.UserStartupFolder, Registry.CurrentUser, null, _folder, _keyRoot + @"\Approved\StartupFolder", false),
         });
     }
 
@@ -96,44 +97,90 @@ public class WindowsStartupManagerTests : IDisposable
         Directory.Delete(_folder, true);
     }
 
+    private void AddRun(string name, string command)
+    {
+        using var run = Registry.CurrentUser.CreateSubKey(_keyRoot + @"\Run");
+        run.SetValue(name, command);
+    }
+
     [Fact]
     public async Task ReadsRunKeyAndFolder_WithApprovedState()
     {
-        using (var run = Registry.CurrentUser.CreateSubKey(_keyRoot + @"\Run"))
-        {
-            run.SetValue("Enabled App", "\"C:\\Apps\\a.exe\" --min");
-            run.SetValue("Disabled App", @"C:\Apps\b.exe /background");
-        }
+        AddRun("Enabled App", @"""C:\Apps\a.exe"" --min");
+        AddRun("Disabled App", @"C:\Apps\b.exe /background");
         using (var approved = Registry.CurrentUser.CreateSubKey(_keyRoot + @"\Approved\Run"))
             approved.SetValue("Disabled App", new byte[] { 3, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8 }, RegistryValueKind.Binary);
         File.WriteAllText(Path.Combine(_folder, "Tool.lnk"), "x");
         File.WriteAllText(Path.Combine(_folder, "desktop.ini"), "x");
 
-        var entries = await _manager.GetEntriesAsync();
+        var entries = await _manager.GetAsync();
 
         Assert.Equal(3, entries.Count);
-        Assert.True(entries.Single(e => e.Name == "Enabled App").IsEnabled);
-        Assert.False(entries.Single(e => e.Name == "Disabled App").IsEnabled);
-        Assert.Equal(@"C:\Apps\a.exe", entries.Single(e => e.Name == "Enabled App").ExecutablePath);
-        Assert.Equal(StartupLocation.UserStartupFolder, entries.Single(e => e.Name == "Tool.lnk").Location);
+        Assert.Equal(StartupStatus.Enabled, entries.Single(e => e.Name == "Enabled App").Status);
+        Assert.Equal(StartupStatus.Disabled, entries.Single(e => e.Name == "Disabled App").Status);
+        Assert.Equal(@"C:\Apps\a.exe", entries.Single(e => e.Name == "Enabled App").FilePath);
+        var folderEntry = entries.Single(e => e.Name == "Tool.lnk");
+        Assert.Equal(StartupLocation.UserStartupFolder, folderEntry.Registration);
+        Assert.Equal(PcCleaner.Domain.Enums.StartupSource.StartupFolder, folderEntry.Source);
     }
 
     [Fact]
-    public async Task SetEnabled_WritesTaskManagerCompatibleFlag_AndNeverDeletesEntry()
+    public async Task DisableAndEnable_WriteTaskManagerFlag_AndNeverDeleteEntry()
     {
-        using (var run = Registry.CurrentUser.CreateSubKey(_keyRoot + @"\Run"))
-            run.SetValue("App", @"C:\Apps\a.exe");
-        var entry = (await _manager.GetEntriesAsync()).Single();
+        AddRun("App", @"C:\Apps\a.exe");
+        var id = (await _manager.GetAsync()).Single().Id;
 
-        _manager.SetEnabled(entry, false);
+        Assert.True(await _manager.DisableAsync(id));
         using (var approved = Registry.CurrentUser.OpenSubKey(_keyRoot + @"\Approved\Run"))
             Assert.Equal(3, ((byte[])approved!.GetValue("App")!)[0]);
-        Assert.False((await _manager.GetEntriesAsync()).Single().IsEnabled);
+        Assert.Equal(StartupStatus.Disabled, (await _manager.GetAsync()).Single().Status);
 
-        _manager.SetEnabled(entry, true);
-        Assert.True((await _manager.GetEntriesAsync()).Single().IsEnabled);
+        Assert.True(await _manager.EnableAsync(id));
+        Assert.Equal(StartupStatus.Enabled, (await _manager.GetAsync()).Single().Status);
         using (var run = Registry.CurrentUser.OpenSubKey(_keyRoot + @"\Run"))
             Assert.Equal(@"C:\Apps\a.exe", run!.GetValue("App"));
+    }
+
+    [Fact]
+    public async Task Enable_TargetsOnlyTheRequestedEntry()
+    {
+        AddRun("First", @"C:\Apps\first.exe");
+        AddRun("Second", @"C:\Apps\second.exe");
+        var entries = await _manager.GetAsync();
+        foreach (var e in entries)
+            await _manager.DisableAsync(e.Id);
+
+        await _manager.EnableAsync(entries.Single(e => e.Name == "Second").Id);
+
+        var after = await _manager.GetAsync();
+        Assert.Equal(StartupStatus.Disabled, after.Single(e => e.Name == "First").Status);
+        Assert.Equal(StartupStatus.Enabled, after.Single(e => e.Name == "Second").Status);
+    }
+
+    [Fact]
+    public async Task SecuritySoftware_CannotBeDisabled()
+    {
+        AddRun("SecurityHealth", @"C:\Windows\System32\SecurityHealthSystray.exe");
+        var entry = (await _manager.GetAsync()).Single();
+
+        Assert.False(entry.IsSafeToDisable);
+        Assert.False(await _manager.DisableAsync(entry.Id));
+        Assert.Equal(StartupStatus.Enabled, (await _manager.GetAsync()).Single().Status);
+    }
+
+    [Fact]
+    public async Task UnknownId_ReturnsFalse()
+    {
+        Assert.False(await _manager.DisableAsync("UserRegistry|does-not-exist"));
+    }
+
+    [Theory]
+    [InlineData("Discord", @"C:\x\Update.exe", StartupImpact.High)]
+    [InlineData("SecurityHealth", "", StartupImpact.Low)]
+    [InlineData("Everything", @"D:\Everything.exe", StartupImpact.Medium)]
+    public void EstimateImpact_UsesAppKind(string name, string exe, StartupImpact expected)
+    {
+        Assert.Equal(expected, WindowsStartupManager.EstimateImpact(name, exe));
     }
 
     [Theory]
@@ -147,7 +194,7 @@ public class WindowsStartupManagerTests : IDisposable
     }
 
     [Theory]
-    [InlineData("\"C:\\Program Files\\App\\app.exe\" --tray", @"C:\Program Files\App\app.exe")]
+    [InlineData(@"""C:\Program Files\App\app.exe"" --tray", @"C:\Program Files\App\app.exe")]
     [InlineData(@"C:\Tools\tool.exe /silent", @"C:\Tools\tool.exe")]
     [InlineData("", null)]
     public void ExtractExecutable_HandlesQuotedAndBareCommands(string command, string? expected)

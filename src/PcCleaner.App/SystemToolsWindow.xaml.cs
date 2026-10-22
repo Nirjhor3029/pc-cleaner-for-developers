@@ -32,6 +32,8 @@ public partial class SystemToolsWindow : Window
         };
     }
 
+    public void ShowStartupTab() => NavStartup.IsChecked = true;
+
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
         if (PowerPanel == null || StartupPanel == null)
@@ -103,7 +105,7 @@ public partial class SystemToolsWindow : Window
         StartupError.Text = string.Empty;
         try
         {
-            var entries = await _startupManager.GetEntriesAsync();
+            var entries = await _startupManager.GetAsync();
             _startupEntries = entries.Select(e => new StartupEntryViewModel(e, _isAdmin)).ToList();
             StartupList.ItemsSource = _startupEntries;
             UpdateStartupSummary();
@@ -123,7 +125,7 @@ public partial class SystemToolsWindow : Window
 
     private async void RefreshStartup_Click(object sender, RoutedEventArgs e) => await LoadStartupAsync();
 
-    private void StartupToggle_Click(object sender, RoutedEventArgs e)
+    private async void StartupToggle_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not CheckBox toggle || toggle.DataContext is not StartupEntryViewModel vm)
             return;
@@ -131,9 +133,13 @@ public partial class SystemToolsWindow : Window
         bool enable = toggle.IsChecked == true;
         try
         {
-            _startupManager.SetEnabled(vm.Entry, enable);
+            bool changed = enable
+                ? await _startupManager.EnableAsync(vm.Entry.Id)
+                : await _startupManager.DisableAsync(vm.Entry.Id);
+            if (!changed)
+                throw new InvalidOperationException("the entry no longer exists or is protected. Refresh and try again.");
             vm.IsEnabled = enable;
-            Log.Information("Startup entry {Name} ({Location}) set to {State}", vm.Entry.Name, vm.Entry.Location, enable ? "enabled" : "disabled");
+            Log.Information("Startup entry {Name} ({Location}) set to {State}", vm.Entry.Name, vm.Entry.Registration, enable ? "enabled" : "disabled");
             StartupError.Text = string.Empty;
         }
         catch (Exception ex)
